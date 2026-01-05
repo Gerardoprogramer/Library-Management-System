@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/genres")
@@ -34,5 +36,12 @@ public class GenreController {
         return ResponseEntity.ok(
                 genreService.updateGenre(id, request)
         );
+    }
+
+    @GetMapping()
+    public ResponseEntity<?> getAllGenres() {
+        List<GenreResponse> genres = genreService.getAllGenres();
+
+        return ResponseEntity.ok(genres);
     }
 }

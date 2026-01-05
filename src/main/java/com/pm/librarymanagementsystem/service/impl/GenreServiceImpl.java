@@ -13,6 +13,9 @@ import com.pm.librarymanagementsystem.service.GenreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class GenreServiceImpl implements GenreService {
@@ -57,6 +60,13 @@ public class GenreServiceImpl implements GenreService {
         GenreMapper.updateEntity(genre, request, parentGenre);
 
         return GenreMapper.toResponse(genreRepository.save(genre));
+    }
+
+    @Override
+    public List<GenreResponse> getAllGenres() {
+        return genreRepository.findAll().stream()
+                .map(GenreMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }
 
