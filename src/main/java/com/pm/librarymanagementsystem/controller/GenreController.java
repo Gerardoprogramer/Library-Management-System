@@ -19,7 +19,7 @@ import java.util.List;
 public class GenreController {
     private final GenreService genreService;
 
-    @PostMapping("/create")
+    @PostMapping()
     public ResponseEntity<GenreResponse> createGenre(
             @Valid @RequestBody CreateGenreRequest request) {
 
@@ -28,7 +28,7 @@ public class GenreController {
                 .body(genreService.createGenre(request));
     }
 
-    @PutMapping("/edit/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<GenreResponse> updateGenre(
             @PathVariable Long id,
             @Valid @RequestBody UpdateGenreRequest request) {
@@ -39,9 +39,12 @@ public class GenreController {
     }
 
     @GetMapping()
-    public ResponseEntity<?> getAllGenres() {
-        List<GenreResponse> genres = genreService.getAllGenres();
+    public ResponseEntity<List<GenreResponse>> getAllGenres() {
+        return ResponseEntity.ok(genreService.getAllGenres());
+    }
 
-        return ResponseEntity.ok(genres);
+    @GetMapping("/{id}")
+    public ResponseEntity<GenreResponse> getGenreById(@PathVariable Long id) {
+        return ResponseEntity.ok(genreService.getGenreById(id));
     }
 }

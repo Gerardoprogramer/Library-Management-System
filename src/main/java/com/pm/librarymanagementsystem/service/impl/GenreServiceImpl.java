@@ -68,5 +68,14 @@ public class GenreServiceImpl implements GenreService {
                 .map(GenreMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public GenreResponse getGenreById(Long id) {
+
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+
+        return GenreMapper.toResponse(genre);
+    }
 }
 

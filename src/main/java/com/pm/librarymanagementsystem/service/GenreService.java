@@ -13,4 +13,6 @@ public interface GenreService {
     GenreResponse updateGenre(Long id, UpdateGenreRequest request);
 
     List<GenreResponse> getAllGenres();
+
+    GenreResponse getGenreById(Long id);
 }
