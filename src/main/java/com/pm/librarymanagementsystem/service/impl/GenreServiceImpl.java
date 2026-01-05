@@ -11,6 +11,8 @@ import com.pm.librarymanagementsystem.modal.Genre;
 import com.pm.librarymanagementsystem.repository.GenreRepository;
 import com.pm.librarymanagementsystem.service.GenreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -76,6 +78,55 @@ public class GenreServiceImpl implements GenreService {
                 .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
 
         return GenreMapper.toResponse(genre);
+    }
+
+    @Override
+    public void deleteGenre(Long id) {
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+
+        genre.setActive(false);
+        genreRepository.save(genre);
+    }
+
+    @Override
+    public void hardDeleGenre(Long id) {
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+
+        genreRepository.delete(genre);
+    }
+
+    @Override
+    public List<GenreResponse> getAllActiveGenresWithSubGenres() {
+        return genreRepository.findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc()
+                .stream()
+                .map(GenreMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GenreResponse> getTopLevelGenres() {
+
+        return genreRepository.findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc()
+                .stream()
+                .map(GenreMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<GenreResponse> searchGenres(String searchTerm, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public long getTotalActiveGenres() {
+        return genreRepository.countByActiveTrue();
+    }
+
+    @Override
+    public long getBookCountByGenreId(Long id) {
+        return 0L;
     }
 }
 

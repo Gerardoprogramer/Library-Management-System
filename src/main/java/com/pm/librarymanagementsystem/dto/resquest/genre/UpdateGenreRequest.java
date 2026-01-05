@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateGenreRequest(
 
+        @NotBlank(message = "El código de género es obligatorio")
+        String code,
+
         @NotBlank(message = "El nombre del género es obligatorio")
         String name,
 

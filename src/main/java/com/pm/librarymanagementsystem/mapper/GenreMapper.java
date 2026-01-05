@@ -27,6 +27,7 @@ public class GenreMapper {
     }
 
     public static void updateEntity(Genre genre, UpdateGenreRequest request, Genre parentGenre) {
+        genre.setCode(request.code());
         genre.setName(request.name());
         genre.setDescription(request.description());
         genre.setDisplayOrder(request.displayOrder());
