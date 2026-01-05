@@ -1,9 +1,7 @@
 package com.pm.librarymanagementsystem.modal;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,38 +20,34 @@ import java.util.List;
 @AllArgsConstructor
 public class Genre {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "El código de género es obligatorio.")
+    @Column(nullable = false, unique = true)
     private String code;
 
-    @NotBlank(message = "El nombre del género es obligatorio.")
+    @Column(nullable = false)
     private String name;
 
-    @Size(max = 500, message = "La descripción no debe superar los 500 caracteres.")
+    @Column(length = 500)
     private String description;
 
-    @Min(value = 0, message = "El orden de visualización no puede ser negativo.")
+    @Column(nullable = false)
     private Integer displayOrder = 0;
 
     @Column(nullable = false)
     private Boolean active = true;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_genre_id")
     private Genre parentGenre;
 
-    @OneToMany
-    private List<Genre> subGenres = new ArrayList<Genre>();
-
-/*    @OneToMany(mappedBy = "genre", cascade = CascadeType.PERSIST)
-    private List<Book> books = new ArrayList<Book>();*/
+    @OneToMany(mappedBy = "parentGenre", fetch = FetchType.LAZY)
+    private List<Genre> subGenres = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updateAt;
-
-
+    private LocalDateTime updatedAt;
 }
