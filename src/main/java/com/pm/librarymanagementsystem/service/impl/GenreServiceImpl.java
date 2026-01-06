@@ -1,8 +1,8 @@
 package com.pm.librarymanagementsystem.service.impl;
 
-import com.pm.librarymanagementsystem.dto.response.genre.GenreResponse;
-import com.pm.librarymanagementsystem.dto.resquest.genre.CreateGenreRequest;
-import com.pm.librarymanagementsystem.dto.resquest.genre.UpdateGenreRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.genre.GenreResponse;
+import com.pm.librarymanagementsystem.payload.dto.resquest.genre.CreateGenreRequest;
+import com.pm.librarymanagementsystem.payload.dto.resquest.genre.UpdateGenreRequest;
 import com.pm.librarymanagementsystem.exception.GenreAlreadyExistsException;
 import com.pm.librarymanagementsystem.exception.GenreNotFoundException;
 import com.pm.librarymanagementsystem.exception.ParentGenreNotFoundException;

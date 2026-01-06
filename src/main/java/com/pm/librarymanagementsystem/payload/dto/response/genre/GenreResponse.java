@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.dto.response.genre;
+package com.pm.librarymanagementsystem.payload.dto.response.genre;
 
 public record GenreResponse(
         Long id,

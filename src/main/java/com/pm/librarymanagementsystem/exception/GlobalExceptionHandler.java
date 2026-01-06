@@ -1,6 +1,6 @@
 package com.pm.librarymanagementsystem.exception;
 
-import com.pm.librarymanagementsystem.dto.apiResponse.ApiResponse;
+import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

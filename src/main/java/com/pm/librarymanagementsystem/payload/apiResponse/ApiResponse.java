@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.dto.apiResponse;
+package com.pm.librarymanagementsystem.payload.apiResponse;
 
 public record ApiResponse<T>(
         boolean success,

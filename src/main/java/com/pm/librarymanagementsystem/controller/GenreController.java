@@ -1,10 +1,10 @@
 package com.pm.librarymanagementsystem.controller;
 
 
-import com.pm.librarymanagementsystem.dto.apiResponse.ApiResponse;
-import com.pm.librarymanagementsystem.dto.response.genre.GenreResponse;
-import com.pm.librarymanagementsystem.dto.resquest.genre.CreateGenreRequest;
-import com.pm.librarymanagementsystem.dto.resquest.genre.UpdateGenreRequest;
+import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.genre.GenreResponse;
+import com.pm.librarymanagementsystem.payload.dto.resquest.genre.CreateGenreRequest;
+import com.pm.librarymanagementsystem.payload.dto.resquest.genre.UpdateGenreRequest;
 import com.pm.librarymanagementsystem.service.GenreService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

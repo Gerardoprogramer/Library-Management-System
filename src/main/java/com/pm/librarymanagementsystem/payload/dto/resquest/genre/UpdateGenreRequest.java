@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.dto.resquest.genre;
+package com.pm.librarymanagementsystem.payload.dto.resquest.genre;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
