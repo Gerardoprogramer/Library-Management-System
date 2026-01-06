@@ -26,8 +26,6 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(min = 10, max = 17)
     @Column(nullable = false, unique = true)
     private String isbn;
 
