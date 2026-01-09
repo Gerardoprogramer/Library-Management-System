@@ -5,14 +5,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log =
@@ -51,8 +51,8 @@ public class GlobalExceptionHandler {
 
         log.warn("Género duplicado: {}", ex.getMessage());
 
-        return ResponseEntity.badRequest().body(
-                ApiResponse.error("Ya existe un género con ese código")
+        return ResponseEntity.status(409).body(
+                ApiResponse.error(ex.getMessage())
         );
     }
 
@@ -65,8 +65,8 @@ public class GlobalExceptionHandler {
 
         log.warn("Parent genre no encontrado: {}", ex.getMessage());
 
-        return ResponseEntity.badRequest().body(
-                ApiResponse.error("Género principal no encontrado")
+        return ResponseEntity.status(404).body(
+                ApiResponse.error(ex.getMessage())
         );
     }
 
@@ -80,7 +80,21 @@ public class GlobalExceptionHandler {
         log.warn("Género no encontrado: {}", ex.getMessage());
 
         return ResponseEntity.status(404).body(
-                ApiResponse.error("Género no encontrado")
+                ApiResponse.error(ex.getMessage())
+        );
+    }
+
+    /* ===============================
+       BOOK YA EXISTE
+       =============================== */
+    @ExceptionHandler(BookAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBookAlreadyExistsException(
+            BookAlreadyExistsException ex) {
+
+        log.warn("Ya existe un Libro con ese ISBN: {}", ex.getMessage());
+
+        return ResponseEntity.status(409).body(
+                ApiResponse.error(ex.getMessage())
         );
     }
 
