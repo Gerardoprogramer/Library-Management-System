@@ -10,15 +10,15 @@ import java.util.List;
 
 public interface BookService {
 
-    BookResponse createBook(CreateBookRequest book);
+    BookResponse createBook(CreateBookRequest request);
 
     BookResponse getBookById(Long id);
 
     List<BookResponse> getAllBooks();
 
-    List<BookResponse> createBooksBulk();
+    List<BookResponse> createBooksBulk(List<BookResponse> bookResponses);
 
-    BookResponse updateBook(Long id, UpdateBookRequest book);
+    BookResponse updateBook(Long id, UpdateBookRequest request);
 
     void deleteBook(Long id);
 
