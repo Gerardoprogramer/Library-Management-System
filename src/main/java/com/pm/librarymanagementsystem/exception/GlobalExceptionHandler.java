@@ -99,6 +99,20 @@ public class GlobalExceptionHandler {
     }
 
     /* ===============================
+       LIBRO NO ENCONTRADO
+       =============================== */
+    @ExceptionHandler(BookNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBookNotFoundException(
+            BookNotFoundException ex) {
+
+        log.warn("Libro no encontrado: {}", ex.getMessage());
+
+        return ResponseEntity.status(404).body(
+                ApiResponse.error(ex.getMessage())
+        );
+    }
+
+    /* ===============================
        FALLBACK (errores no controlados)
        =============================== */
     @ExceptionHandler(Exception.class)
