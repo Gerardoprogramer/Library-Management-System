@@ -2,8 +2,6 @@ package com.pm.librarymanagementsystem.modal;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -72,7 +70,7 @@ public class Book {
     private LocalDateTime updatedAt;
 
     @AssertTrue(message = "Las copias disponibles no pueden superar el total de copias.")
-    private boolean isAvailableCopiesValid(){
+    public boolean isAvailableCopiesValid(){
         if(totalCopies == null || availableCopies==null){
             return true;
         }
