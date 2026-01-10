@@ -16,7 +16,7 @@ public interface BookService {
 
     List<BookResponse> getAllBooks();
 
-    List<BookResponse> createBooksBulk(List<BookResponse> bookResponses);
+    List<BookResponse> createBooksBulk(List<CreateBookRequest> requests);
 
     BookResponse updateBook(Long id, UpdateBookRequest request);
 
@@ -31,4 +31,6 @@ public interface BookService {
     long getTotalActiveBooks();
 
     long getTotalAvailableBooks();
+
+    BookResponse getBookByISBN(String isbn);
 }

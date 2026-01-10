@@ -1,6 +1,7 @@
 package com.pm.librarymanagementsystem.service.impl;
 
 import com.pm.librarymanagementsystem.exception.BookAlreadyExistsException;
+import com.pm.librarymanagementsystem.exception.BookNotFoundException;
 import com.pm.librarymanagementsystem.exception.GenreNotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookMapper;
 import com.pm.librarymanagementsystem.modal.Book;
@@ -16,6 +17,7 @@ import com.pm.librarymanagementsystem.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,7 +34,7 @@ public class BookServiceImpl implements BookService {
             throw new BookAlreadyExistsException("El libro con el isbn " + request.isbn() + " ya existe");
         }
 
-        Genre   genre = genreRepository.findById(request.genreId())
+        Genre genre = genreRepository.findById(request.genreId())
                     .orElseThrow(() ->
                             new GenreNotFoundException("Género no encontrado"));
 
@@ -43,7 +45,11 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponse getBookById(Long id) {
-        return null;
+
+        Book book = bookRepository.findById(id)
+                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+
+        return BookMapper.toResponse(book);
     }
 
     @Override
@@ -52,13 +58,29 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<BookResponse> createBooksBulk(List<BookResponse> bookResponses) {
-        return List.of();
+    public List<BookResponse> createBooksBulk(List<CreateBookRequest> requests) {
+
+        List<BookResponse> createdBooks = new ArrayList<>();
+        for(CreateBookRequest request:requests){
+            BookResponse book = createBook(request);
+            createdBooks.add(book);
+        }
+        return createdBooks;
     }
 
     @Override
-    public BookResponse updateBook(Long id, UpdateBookRequest book) {
-        return null;
+    public BookResponse updateBook(Long id, UpdateBookRequest request) {
+
+        Book book = bookRepository.findById(id)
+                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+
+        Genre genre = genreRepository.findById(request.genreId())
+                .orElseThrow(() ->
+                        new GenreNotFoundException("Género no encontrado"));
+
+        BookMapper.updateEntity(book, request, genre);
+
+        return BookMapper.toResponse(bookRepository.save(book));
     }
 
     @Override
@@ -84,5 +106,13 @@ public class BookServiceImpl implements BookService {
     @Override
     public long getTotalAvailableBooks() {
         return 0;
+    }
+
+    @Override
+    public BookResponse getBookByISBN(String isbn) {
+        Book book = bookRepository.findByIsbn(isbn)
+                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+
+        return BookMapper.toResponse(book);
     }
 }
