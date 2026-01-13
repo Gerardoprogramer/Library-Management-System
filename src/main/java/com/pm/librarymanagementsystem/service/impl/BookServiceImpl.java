@@ -15,10 +15,15 @@ import com.pm.librarymanagementsystem.repository.BookRepository;
 import com.pm.librarymanagementsystem.repository.GenreRepository;
 import com.pm.librarymanagementsystem.service.BookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +59,10 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<BookResponse> getAllBooks() {
-        return List.of();
+        return bookRepository.findAll()
+                .stream()
+                .map(BookMapper::toResponse)
+                .toList();
     }
 
     @Override
@@ -102,17 +110,31 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public PageResponse<BookResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest) {
-        return null;
+
+        Pageable pageable = createPageable(
+                searchBookRequest.page(),
+                searchBookRequest.size(),
+                searchBookRequest.sortBy(),
+                searchBookRequest.sortDirection());
+
+        Page<Book> bookPage =  bookRepository.searchBookswithFilters(
+                searchBookRequest.searchTerm(),
+                searchBookRequest.genreId(),
+                searchBookRequest.availableOnly(),
+                pageable
+
+        );
+        return toPageResponse(bookPage);
     }
 
     @Override
     public long getTotalActiveBooks() {
-        return 0;
+        return bookRepository.countByActiveTrue();
     }
 
     @Override
     public long getTotalAvailableBooks() {
-        return 0;
+        return bookRepository.countAvailableBooks();
     }
 
     @Override
@@ -121,5 +143,30 @@ public class BookServiceImpl implements BookService {
                 .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
 
         return BookMapper.toResponse(book);
+    }
+
+    private Pageable createPageable(int page, int size, String sortBy, String sortDirection){
+        size = Math.min(size, 10);
+        size = Math.max(size, 1);
+
+        Sort sort = sortDirection.equalsIgnoreCase("ASC")
+                ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+        return PageRequest.of(page, size, sort);
+    }
+
+    public PageResponse<BookResponse> toPageResponse(Page<Book> books) {
+        List<BookResponse> bookDtos = books.getContent()
+                .stream()
+                .map(BookMapper::toResponse)
+                .collect(Collectors.toList());
+        return new PageResponse<>(bookDtos,
+                books.getNumber(),
+                books.getSize(),
+                books.getTotalElements(),
+                books.getTotalPages(),
+                books.isLast(),
+                books.isFirst(),
+                books.isEmpty());
     }
 }
