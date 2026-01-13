@@ -33,4 +33,5 @@ public interface BookService {
     long getTotalAvailableBooks();
 
     BookResponse getBookByISBN(String isbn);
+
 }
