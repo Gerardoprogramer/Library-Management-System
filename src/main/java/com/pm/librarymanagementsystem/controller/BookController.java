@@ -89,12 +89,29 @@ public class BookController {
         );
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> advancedSearch(
-            @Valid @RequestBody SearchBookRequest request){
-        PageResponse<BookResponse> books = bookService.searchBooksWithFilters(request);
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> searchBooks(
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false, defaultValue = "false") Boolean availableOnly,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection){
 
-        return ResponseEntity.ok(ApiResponse.success("Libros encontrados correctamente", books));
+            SearchBookRequest bookRequest = new SearchBookRequest(
+                    searchTerm, genreId, availableOnly,
+                    page, size, sortBy, sortDirection
+            );
+
+            PageResponse<BookResponse> books = bookService.searchBooksWithFilters(bookRequest);
+
+        String message = books.empty()
+                ? "No se encontraron libros"
+                : "Libros encontrados correctamente";
+
+            return ResponseEntity.ok(ApiResponse.success(message, books));
+
     }
 
     @GetMapping("/stats")
