@@ -1,12 +1,12 @@
 package com.pm.librarymanagementsystem.controller;
 
-import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
-import com.pm.librarymanagementsystem.payload.dto.response.genre.GenreResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookStatsResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.book.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.resquest.book.SearchBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.genre.UpdateGenreRequest;
 import com.pm.librarymanagementsystem.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -70,4 +70,41 @@ public class BookController {
                 ApiResponse.success("Libro actualizado correctamente", book)
         );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
+        bookService.deleteBook(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Libro desactivado correctamente")
+        );
+    }
+
+    @DeleteMapping("/{id}/hard")
+    public ResponseEntity<ApiResponse<Void>> hardDeleteBook(@PathVariable Long id) {
+        bookService.hardDeleteBook(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Libro eliminado permanentemente")
+        );
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> advancedSearch(
+            @Valid @RequestBody SearchBookRequest request){
+        PageResponse<BookResponse> books = bookService.searchBooksWithFilters(request);
+
+        return ResponseEntity.ok(ApiResponse.success("Libros encontrados correctamente", books));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<BookStatsResponse>> getBookStats(){
+        long totalActive = bookService.getTotalActiveBooks();
+        long totalAvailable= bookService.getTotalAvailableBooks();
+
+       BookStatsResponse stats = new BookStatsResponse(totalActive, totalAvailable);
+
+       return ResponseEntity.ok(ApiResponse.success("Stats encontrados", stats));
+    }
+
 }
