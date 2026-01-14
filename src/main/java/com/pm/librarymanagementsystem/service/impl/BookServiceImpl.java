@@ -58,14 +58,6 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<BookResponse> getAllBooks() {
-        return bookRepository.findAll()
-                .stream()
-                .map(BookMapper::toResponse)
-                .toList();
-    }
-
-    @Override
     public List<BookResponse> createBooksBulk(List<CreateBookRequest> requests) {
 
         List<BookResponse> createdBooks = new ArrayList<>();

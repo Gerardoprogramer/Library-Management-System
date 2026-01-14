@@ -14,8 +14,6 @@ public interface BookService {
 
     BookResponse getBookById(Long id);
 
-    List<BookResponse> getAllBooks();
-
     List<BookResponse> createBooksBulk(List<CreateBookRequest> requests);
 
     BookResponse updateBook(Long id, UpdateBookRequest request);
