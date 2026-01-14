@@ -1,9 +1,11 @@
 package com.pm.librarymanagementsystem.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -109,6 +111,29 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(404).body(
                 ApiResponse.error(ex.getMessage())
+        );
+    }
+
+    /* ===============================
+   JSON MAL FORMADO / TIPO INVALIDO
+   =============================== */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex) {
+
+        if (ex.getCause() instanceof InvalidFormatException invalidFormat) {
+
+            String fieldName = invalidFormat.getPath().isEmpty()
+                    ? "campo"
+                    : invalidFormat.getPath().get(0).getFieldName();
+
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.error(fieldName + " no válido")
+            );
+        }
+
+        return ResponseEntity.badRequest().body(
+                ApiResponse.error("Solicitud mal formada")
         );
     }
 
