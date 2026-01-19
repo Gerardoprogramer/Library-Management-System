@@ -1,8 +1,7 @@
 package com.pm.librarymanagementsystem.service.impl;
 
-import com.pm.librarymanagementsystem.exception.BookAlreadyExistsException;
-import com.pm.librarymanagementsystem.exception.BookNotFoundException;
-import com.pm.librarymanagementsystem.exception.GenreNotFoundException;
+import com.pm.librarymanagementsystem.exception.ConflictException;
+import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
@@ -36,12 +35,12 @@ public class BookServiceImpl implements BookService {
     public BookResponse createBook(CreateBookRequest request) {
 
         if(bookRepository.existsByIsbn(request.isbn())){
-            throw new BookAlreadyExistsException("El libro con el isbn " + request.isbn() + " ya existe");
+            throw new ConflictException("El libro con el isbn " + request.isbn() + " ya existe");
         }
 
         Genre genre = genreRepository.findById(request.genreId())
                     .orElseThrow(() ->
-                            new GenreNotFoundException("Género no encontrado"));
+                            new NotFoundException("Género no encontrado"));
 
         Book book = BookMapper.toEntity(request, genre);
 
@@ -52,7 +51,7 @@ public class BookServiceImpl implements BookService {
     public BookResponse getBookById(Long id) {
 
         Book book = bookRepository.findById(id)
-                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         return BookMapper.toResponse(book);
     }
@@ -72,11 +71,11 @@ public class BookServiceImpl implements BookService {
     public BookResponse updateBook(Long id, UpdateBookRequest request) {
 
         Book book = bookRepository.findById(id)
-                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         Genre genre = genreRepository.findById(request.genreId())
                 .orElseThrow(() ->
-                        new GenreNotFoundException("Género no encontrado"));
+                        new NotFoundException("Género no encontrado"));
 
         BookMapper.updateEntity(book, request, genre);
 
@@ -86,7 +85,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public void deleteBook(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         book.setActive(false);
         bookRepository.save(book);
@@ -95,7 +94,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public void hardDeleteBook(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         bookRepository.delete(book);
     }
@@ -132,7 +131,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookResponse getBookByISBN(String isbn) {
         Book book = bookRepository.findByIsbn(isbn)
-                .orElseThrow(()-> new BookNotFoundException("Libro no encontrado"));
+                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         return BookMapper.toResponse(book);
     }

@@ -1,11 +1,10 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.exception.ConflictException;
+import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.payload.dto.response.genre.GenreResponse;
 import com.pm.librarymanagementsystem.payload.dto.resquest.genre.CreateGenreRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.genre.UpdateGenreRequest;
-import com.pm.librarymanagementsystem.exception.GenreAlreadyExistsException;
-import com.pm.librarymanagementsystem.exception.GenreNotFoundException;
-import com.pm.librarymanagementsystem.exception.ParentGenreNotFoundException;
 import com.pm.librarymanagementsystem.mapper.GenreMapper;
 import com.pm.librarymanagementsystem.modal.Genre;
 import com.pm.librarymanagementsystem.repository.GenreRepository;
@@ -30,13 +29,13 @@ public class GenreServiceImpl implements GenreService {
         Genre parentGenre = null;
 
         if (genreRepository.existsByCode(request.code())) {
-            throw new GenreAlreadyExistsException("Ya existe un género con ese código " + request.code());
+            throw new ConflictException("Ya existe un género con ese código " + request.code());
         }
 
         if (request.parentGenreId() != null) {
             parentGenre = genreRepository.findById(request.parentGenreId())
                     .orElseThrow(() ->
-                            new ParentGenreNotFoundException("Género principal no encontrado"));
+                            new NotFoundException("Género principal no encontrado"));
         }
 
         Genre genre = GenreMapper.toEntity(request, parentGenre);
@@ -50,13 +49,13 @@ public class GenreServiceImpl implements GenreService {
 
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() ->
-                        new GenreNotFoundException("Género no encontrado"));
+                        new NotFoundException("Género no encontrado"));
 
         Genre parentGenre = null;
         if (request.parentGenreId() != null) {
             parentGenre = genreRepository.findById(request.parentGenreId())
                     .orElseThrow(() ->
-                            new ParentGenreNotFoundException("Género principal no encontrado"));
+                            new NotFoundException("Género principal no encontrado"));
         }
 
         GenreMapper.updateEntity(genre, request, parentGenre);
@@ -75,7 +74,7 @@ public class GenreServiceImpl implements GenreService {
     public GenreResponse getGenreById(Long id) {
 
         Genre genre = genreRepository.findById(id)
-                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 
         return GenreMapper.toResponse(genre);
     }
@@ -83,7 +82,7 @@ public class GenreServiceImpl implements GenreService {
     @Override
     public void deleteGenre(Long id) {
         Genre genre = genreRepository.findById(id)
-                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 
         genre.setActive(false);
         genreRepository.save(genre);
@@ -92,7 +91,7 @@ public class GenreServiceImpl implements GenreService {
     @Override
     public void hardDeleGenre(Long id) {
         Genre genre = genreRepository.findById(id)
-                .orElseThrow(() -> new GenreNotFoundException("Género no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 
         genreRepository.delete(genre);
     }

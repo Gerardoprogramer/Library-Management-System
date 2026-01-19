@@ -45,74 +45,31 @@ public class GlobalExceptionHandler {
     }
 
     /* ===============================
-       GENRE YA EXISTE
+       Recurso NO ENCONTRADO
        =============================== */
-    @ExceptionHandler(GenreAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleGenreAlreadyExistsException(
-            GenreAlreadyExistsException ex) {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(NotFoundException ex) {
 
-        log.warn("Género duplicado: {}", ex.getMessage());
+        log.warn("Recurso no encontrado: {}", ex.getMessage());
+
+        return ResponseEntity.status(404).body(
+                ApiResponse.error(ex.getMessage())
+        );
+    }
+
+    /* ===============================
+       RECURSO YA EXISTE
+       =============================== */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict(ConflictException ex) {
+
+        log.warn("Conflicto de negocio: {}", ex.getMessage());
 
         return ResponseEntity.status(409).body(
                 ApiResponse.error(ex.getMessage())
         );
     }
 
-    /* ===============================
-       PARENT GENRE NO ENCONTRADO
-       =============================== */
-    @ExceptionHandler(ParentGenreNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleParentGenreNotFoundException(
-            ParentGenreNotFoundException ex) {
-
-        log.warn("Parent genre no encontrado: {}", ex.getMessage());
-
-        return ResponseEntity.status(404).body(
-                ApiResponse.error(ex.getMessage())
-        );
-    }
-
-    /* ===============================
-       GENRE NO ENCONTRADO
-       =============================== */
-    @ExceptionHandler(GenreNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleGenreNotFoundException(
-            GenreNotFoundException ex) {
-
-        log.warn("Género no encontrado: {}", ex.getMessage());
-
-        return ResponseEntity.status(404).body(
-                ApiResponse.error(ex.getMessage())
-        );
-    }
-
-    /* ===============================
-       BOOK YA EXISTE
-       =============================== */
-    @ExceptionHandler(BookAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBookAlreadyExistsException(
-            BookAlreadyExistsException ex) {
-
-        log.warn("Ya existe un Libro con ese ISBN: {}", ex.getMessage());
-
-        return ResponseEntity.status(409).body(
-                ApiResponse.error(ex.getMessage())
-        );
-    }
-
-    /* ===============================
-       LIBRO NO ENCONTRADO
-       =============================== */
-    @ExceptionHandler(BookNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBookNotFoundException(
-            BookNotFoundException ex) {
-
-        log.warn("Libro no encontrado: {}", ex.getMessage());
-
-        return ResponseEntity.status(404).body(
-                ApiResponse.error(ex.getMessage())
-        );
-    }
 
     /* ===============================
    JSON MAL FORMADO / TIPO INVALIDO
