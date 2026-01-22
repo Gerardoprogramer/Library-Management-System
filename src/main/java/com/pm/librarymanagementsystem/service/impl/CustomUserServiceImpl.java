@@ -20,12 +20,13 @@ public class CustomUserServiceImpl implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    // Spring Security uses the term "username", but in our system we authenticate by email
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(username)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("Usuario no encontrado: " + username)
+                        new UsernameNotFoundException("Usuario no encontrado: " + email)
                 );
 
         GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(user.getRole().toString());

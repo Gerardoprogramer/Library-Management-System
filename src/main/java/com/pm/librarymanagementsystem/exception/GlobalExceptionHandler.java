@@ -70,6 +70,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    /* ===============================
+       TOKEN NO VALIDO
+       =============================== */
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidToken(InvalidTokenException ex) {
+
+        log.warn("Token inválido: {}", ex.getMessage());
+
+        return ResponseEntity.badRequest().body(
+                ApiResponse.error(ex.getMessage())
+        );
+    }
+
 
     /* ===============================
    JSON MAL FORMADO / TIPO INVALIDO
