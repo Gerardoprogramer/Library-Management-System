@@ -80,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.findByEmail(request.email())
                 .ifPresent(usr -> {
-            throw new ConflictException("El correo ya está registrado: "+ request.email());
+            throw new ConflictException("El correo ya está registrado");
         });
 
         User user = UserMapper.toRegister(request, passwordEncoder.encode(request.password()));
@@ -104,7 +104,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse logout() {
-        return null;
+        return new AuthResponse(
+                null,
+                "Sesión cerrada",
+                "Logout exitoso",
+                null
+        );
     }
 
     @Transactional
@@ -121,10 +126,12 @@ public class AuthServiceImpl implements AuthService {
                 .user(user)
                 .expiryDate(LocalDateTime.now().plusMinutes(5))
                 .build();
+
         passwordResetTokenRepository.save(resetToken);
+
         String reserLink = frontendUrl+token;
-        String subject = "Solicitud de restablecimiento de contraseña";
-        String body = "Solicitaste restablecer tu contraseña. Utiliza este enlace (válido durante 5 minutos): " + reserLink;
+        String subject = "Restablecimiento de contraseña";
+        String body = "Usa este enlace (válido por 15 minutos): " + reserLink;
 
         emailService.sendEmail(user.getEmail(), subject, body);
     }
@@ -132,11 +139,11 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(()-> new InvalidTokenException("Token no valido!"));
+                .orElseThrow(()-> new InvalidTokenException("Token inválido o expirado"));
 
         if(resetToken.isExpired()){
             passwordResetTokenRepository.delete(resetToken);
-            throw new InvalidTokenException("Token caducado");
+            throw new InvalidTokenException("Token inválido o expirado");
         }
 
         User user = resetToken.getUser();

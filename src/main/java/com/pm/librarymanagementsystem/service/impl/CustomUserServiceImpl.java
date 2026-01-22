@@ -2,6 +2,7 @@ package com.pm.librarymanagementsystem.service.impl;
 
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.repository.UserRepository;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,12 +23,11 @@ public class CustomUserServiceImpl implements UserDetailsService {
 
     // Spring Security uses the term "username", but in our system we authenticate by email
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("Usuario no encontrado: " + email)
-                );
+                        new BadCredentialsException("Credenciales inválidas"));
 
         GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(user.getRole().toString());
 

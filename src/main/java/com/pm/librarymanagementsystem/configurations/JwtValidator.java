@@ -1,6 +1,7 @@
 package com.pm.librarymanagementsystem.configurations;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class JwtValidator extends OncePerRequestFilter {
@@ -38,13 +40,18 @@ public class JwtValidator extends OncePerRequestFilter {
             header = header.substring(7);
 
             try {
-                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
                 Claims claims = Jwts.parser().verifyWith(key).build()
                         .parseSignedClaims(header).getPayload();
 
                 String email = claims.get("email", String.class);
 
                 String authorities = claims.get("authorities", String.class);
+
+                if (authorities == null || authorities.isBlank()) {
+                    throw new JwtException("Authorities inválidas");
+                }
+
 
                 List<GrantedAuthority> authorityList = AuthorityUtils
                         .commaSeparatedStringToAuthorityList(authorities);
@@ -57,6 +64,8 @@ public class JwtValidator extends OncePerRequestFilter {
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Token inválido o expirado\"}");
                 return;
             }
         }

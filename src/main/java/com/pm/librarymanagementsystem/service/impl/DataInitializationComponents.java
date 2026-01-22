@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.domain.AuthProvider;
 import com.pm.librarymanagementsystem.domain.UserRole;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.repository.UserRepository;
@@ -16,10 +17,10 @@ public class DataInitializationComponents implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.admin.email}")
+    @Value("${ADMIN_EMAIL}")
     private String adminEmail;
 
-    @Value("${app.admin.password}")
+    @Value("${ADMIN_PASSWORD}")
     private String adminPassword;
 
     @Override
@@ -36,6 +37,7 @@ public class DataInitializationComponents implements CommandLineRunner {
                     .email(adminEmail)
                     .fullName("Obsidian Admin")
                     .role(UserRole.ROLE_ADMIN)
+                    .authProvider(AuthProvider.LOCAL)
                     .build();
 
             User admin = userRepository.save(user);
