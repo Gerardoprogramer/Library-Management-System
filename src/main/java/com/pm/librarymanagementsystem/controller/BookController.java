@@ -23,17 +23,6 @@ public class BookController {
 
     private final BookService bookService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<BookResponse>> createBook(
-            @Valid @RequestBody CreateBookRequest request) {
-
-        BookResponse book = bookService.createBook(request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Libro creado correctamente", book));
-    }
-
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse<List<BookResponse>>> createBooksBulk(
             @Valid @RequestBody List<CreateBookRequest> requests) {
