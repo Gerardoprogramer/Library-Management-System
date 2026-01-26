@@ -5,7 +5,7 @@ import com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan.Subs
 import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.CreateSubscriptionPlanRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 
-import java.util.function.Consumer;
+import static com.pm.librarymanagementsystem.util.MapperUtils.setIfNotNull;
 
 public class SubscriptionPlanMapper {
 
@@ -82,9 +82,4 @@ public class SubscriptionPlanMapper {
         );
     }
 
-    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
-        if (value != null) {
-            setter.accept(value);
-        }
-    }
 }

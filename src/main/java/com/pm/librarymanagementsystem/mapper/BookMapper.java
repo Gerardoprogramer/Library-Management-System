@@ -1,13 +1,12 @@
 package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
-import com.pm.librarymanagementsystem.payload.dto.response.book.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookRequest;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
 
-import java.util.function.Consumer;
+import static com.pm.librarymanagementsystem.util.MapperUtils.setIfNotNull;
 
 public class BookMapper {
 
@@ -82,9 +81,4 @@ public class BookMapper {
         );
     }
 
-    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
-        if (value != null) {
-            setter.accept(value);
-        }
-    }
 }

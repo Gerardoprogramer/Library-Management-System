@@ -15,9 +15,7 @@ import com.pm.librarymanagementsystem.repository.GenreRepository;
 import com.pm.librarymanagementsystem.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -100,13 +98,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public PageResponse<BookResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest) {
-
-        Pageable pageable = createPageable(
-                searchBookRequest.page(),
-                searchBookRequest.size(),
-                searchBookRequest.sortBy(),
-                searchBookRequest.sortDirection());
+    public PageResponse<BookResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest, Pageable pageable) {
 
         Page<Book> bookPage =  bookRepository.searchBookswithFilters(
                 searchBookRequest.searchTerm(),
@@ -134,16 +126,6 @@ public class BookServiceImpl implements BookService {
                 .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
         return BookMapper.toResponse(book);
-    }
-
-    private Pageable createPageable(int page, int size, String sortBy, String sortDirection){
-        size = Math.min(size, 10);
-        size = Math.max(size, 1);
-
-        Sort sort = sortDirection.equalsIgnoreCase("ASC")
-                ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-
-        return PageRequest.of(page, size, sort);
     }
 
     public PageResponse<BookResponse> toPageResponse(Page<Book> books) {

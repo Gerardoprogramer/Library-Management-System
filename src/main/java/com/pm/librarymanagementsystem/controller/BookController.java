@@ -10,6 +10,9 @@ import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookReques
 import com.pm.librarymanagementsystem.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,17 +86,17 @@ public class BookController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) Long genreId,
             @RequestParam(required = false, defaultValue = "false") Boolean availableOnly,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection){
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable){
 
             SearchBookRequest bookRequest = new SearchBookRequest(
-                    searchTerm, genreId, availableOnly,
-                    page, size, sortBy, sortDirection
+                    searchTerm, genreId, availableOnly
             );
 
-            PageResponse<BookResponse> books = bookService.searchBooksWithFilters(bookRequest);
+            PageResponse<BookResponse> books = bookService.searchBooksWithFilters(bookRequest, pageable);
 
         String message = books.empty()
                 ? "No se encontraron libros"

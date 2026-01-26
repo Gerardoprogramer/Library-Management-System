@@ -5,6 +5,7 @@ import com.pm.librarymanagementsystem.payload.dto.response.book.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.SearchBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public interface BookService {
     void hardDeleteBook(Long id);
 
     PageResponse<BookResponse> searchBooksWithFilters(
-            SearchBookRequest searchBookRequest
+            SearchBookRequest searchBookRequest, Pageable pageable
     );
 
     long getTotalActiveBooks();
