@@ -4,6 +4,7 @@ import com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan.Subs
 import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.CreateSubscriptionPlanRequest;
 import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface SubscriptionPlanService {
 
@@ -13,7 +14,7 @@ public interface SubscriptionPlanService {
 
     void deleteSubscriptionPlan(Long id);
 
-    Page<SubscriptionPlanResponse> getAllSubscriptionPlans(int page, int size);
+    Page<SubscriptionPlanResponse> getAllSubscriptionPlans(Pageable pageable);
 
 
 }

@@ -10,6 +10,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,11 +51,14 @@ public class SubscriptionPlanController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SubscriptionPlanResponse>>> getAllSubscriptionPlans(
-            @RequestParam(defaultValue = "0") int page,
-            @Max(50) @Min(1) @RequestParam(defaultValue = "10") int size
+            @PageableDefault(
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ){
         return ResponseEntity.ok(ApiResponse.success("Listado de planes",
-                subscriptionPlanService.getAllSubscriptionPlans(page, size)));
+                subscriptionPlanService.getAllSubscriptionPlans(pageable)));
     }
 
     @DeleteMapping("/admin/{id}")

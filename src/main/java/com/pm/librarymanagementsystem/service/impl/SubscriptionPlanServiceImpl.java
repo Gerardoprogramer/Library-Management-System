@@ -66,12 +66,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
-    public Page<SubscriptionPlanResponse> getAllSubscriptionPlans(int page, int size) {
-            Pageable pageable = PageRequest.of(
-                    page,
-                    size,
-                    Sort.by("createdAt").descending()
-            );
+    public Page<SubscriptionPlanResponse> getAllSubscriptionPlans(Pageable pageable) {
 
             return subscriptionPlanRepository.findAll(pageable)
                     .map(SubscriptionPlanMapper::toResponse);
