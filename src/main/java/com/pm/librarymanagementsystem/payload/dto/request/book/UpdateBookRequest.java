@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.payload.dto.resquest.book;
+package com.pm.librarymanagementsystem.payload.dto.request.book;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

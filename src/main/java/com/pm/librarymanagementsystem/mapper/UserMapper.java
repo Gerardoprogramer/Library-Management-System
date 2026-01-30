@@ -3,7 +3,7 @@ package com.pm.librarymanagementsystem.mapper;
 import com.pm.librarymanagementsystem.domain.UserRole;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.response.user.UserResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.RegisterRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
 
 import java.time.LocalDateTime;
 

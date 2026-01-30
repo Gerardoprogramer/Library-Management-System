@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan;
+package com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan;
 
 import com.pm.librarymanagementsystem.domain.Currency;
 import jakarta.validation.constraints.Positive;

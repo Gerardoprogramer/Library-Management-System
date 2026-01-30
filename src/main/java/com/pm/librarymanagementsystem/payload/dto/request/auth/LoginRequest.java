@@ -1,8 +1,7 @@
-package com.pm.librarymanagementsystem.payload.dto.resquest.auth;
+package com.pm.librarymanagementsystem.payload.dto.request.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public record LoginRequest(
         @NotBlank(message = "Email is required")

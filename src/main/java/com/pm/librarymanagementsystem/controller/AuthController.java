@@ -2,10 +2,10 @@ package com.pm.librarymanagementsystem.controller;
 
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.auth.AuthResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.ForgotPasswordRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.LoginRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.RegisterRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.ResetPasswordRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.ForgotPasswordRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.LoginRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.ResetPasswordRequest;
 import com.pm.librarymanagementsystem.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

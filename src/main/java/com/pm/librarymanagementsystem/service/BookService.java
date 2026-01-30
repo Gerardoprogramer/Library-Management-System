@@ -1,10 +1,10 @@
 package com.pm.librarymanagementsystem.service;
 
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
-import com.pm.librarymanagementsystem.payload.dto.response.book.PageResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.SearchBookRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
+import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.book.SearchBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

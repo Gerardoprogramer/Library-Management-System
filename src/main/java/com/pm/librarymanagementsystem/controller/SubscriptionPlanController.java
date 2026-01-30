@@ -1,15 +1,13 @@
 package com.pm.librarymanagementsystem.controller;
 
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan.SubscriptionPlanResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.CreateSubscriptionPlanRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.UpdateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.CreateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 import com.pm.librarymanagementsystem.service.SubscriptionPlanService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -50,7 +48,7 @@ public class SubscriptionPlanController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<SubscriptionPlanResponse>>> getAllSubscriptionPlans(
+    public ResponseEntity<ApiResponse<PageResponse<SubscriptionPlanResponse>>> getAllSubscriptionPlans(
             @PageableDefault(
                     size = 10,
                     sort = "createdAt",

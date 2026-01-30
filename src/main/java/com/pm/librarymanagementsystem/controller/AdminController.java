@@ -3,7 +3,7 @@ package com.pm.librarymanagementsystem.controller;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.user.UserResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
 import com.pm.librarymanagementsystem.service.BookService;
 import com.pm.librarymanagementsystem.service.UserService;
 import jakarta.validation.Valid;

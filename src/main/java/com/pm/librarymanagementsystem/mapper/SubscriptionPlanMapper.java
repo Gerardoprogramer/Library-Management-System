@@ -2,8 +2,8 @@ package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
 import com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan.SubscriptionPlanResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.CreateSubscriptionPlanRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.UpdateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.CreateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 
 import static com.pm.librarymanagementsystem.util.MapperUtils.setIfNotNull;
 

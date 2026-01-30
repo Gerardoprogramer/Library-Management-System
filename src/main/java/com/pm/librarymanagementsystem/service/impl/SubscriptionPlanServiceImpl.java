@@ -4,22 +4,18 @@ import com.pm.librarymanagementsystem.exception.ConflictException;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.SubscriptionPlanMapper;
 import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
+import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan.SubscriptionPlanResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.user.UserResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.CreateSubscriptionPlanRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.SubscriptionPlan.UpdateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.CreateSubscriptionPlanRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 import com.pm.librarymanagementsystem.repository.SubscriptionPlanRepository;
 import com.pm.librarymanagementsystem.service.SubscriptionPlanService;
 import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,10 +62,21 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
-    public Page<SubscriptionPlanResponse> getAllSubscriptionPlans(Pageable pageable) {
+    public PageResponse<SubscriptionPlanResponse> getAllSubscriptionPlans(Pageable pageable) {
 
-            return subscriptionPlanRepository.findAll(pageable)
-                    .map(SubscriptionPlanMapper::toResponse);
+            Page<SubscriptionPlanResponse>  subscriptionPlan = subscriptionPlanRepository.findAll(pageable)
+                .map(SubscriptionPlanMapper::toResponse);
+
+            return new PageResponse<>(
+                    subscriptionPlan.getContent(),
+                    subscriptionPlan.getNumber(),
+                    subscriptionPlan.getSize(),
+                    subscriptionPlan.getTotalElements(),
+                    subscriptionPlan.getTotalPages(),
+                    subscriptionPlan.isLast(),
+                    subscriptionPlan.isFirst(),
+                    subscriptionPlan.isEmpty()
+                    );
         }
     }
 

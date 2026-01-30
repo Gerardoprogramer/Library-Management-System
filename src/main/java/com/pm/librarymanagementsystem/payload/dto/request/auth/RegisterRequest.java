@@ -1,11 +1,8 @@
-package com.pm.librarymanagementsystem.payload.dto.resquest.auth;
+package com.pm.librarymanagementsystem.payload.dto.request.auth;
 
-import com.pm.librarymanagementsystem.domain.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
-import java.time.LocalDateTime;
 
 public record RegisterRequest(
         @NotBlank(message = "Email is required")

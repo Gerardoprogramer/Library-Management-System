@@ -1,8 +1,8 @@
 package com.pm.librarymanagementsystem.service;
 
 import com.pm.librarymanagementsystem.payload.dto.response.genre.GenreResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.genre.CreateGenreRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.genre.UpdateGenreRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.genre.CreateGenreRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.genre.UpdateGenreRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

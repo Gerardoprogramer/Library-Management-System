@@ -1,8 +1,8 @@
 package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.CreateBookRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.book.UpdateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
 

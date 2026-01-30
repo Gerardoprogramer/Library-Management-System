@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.payload.dto.resquest.book;
+package com.pm.librarymanagementsystem.payload.dto.request.book;
 
 public record SearchBookRequest(
       String searchTerm,

@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.payload.dto.response.book;
+package com.pm.librarymanagementsystem.payload.dto.response;
 
 import java.util.List;
 

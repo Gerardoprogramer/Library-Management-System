@@ -1,8 +1,8 @@
 package com.pm.librarymanagementsystem.service;
 
 import com.pm.librarymanagementsystem.payload.dto.response.auth.AuthResponse;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.LoginRequest;
-import com.pm.librarymanagementsystem.payload.dto.resquest.auth.RegisterRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.LoginRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
 
 public interface AuthService {
 
