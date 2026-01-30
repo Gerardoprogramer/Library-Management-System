@@ -35,4 +35,12 @@ public class UserServiceImpl implements UserService {
                 .map(UserMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public User getCurrentUserEntity() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+    }
 }
