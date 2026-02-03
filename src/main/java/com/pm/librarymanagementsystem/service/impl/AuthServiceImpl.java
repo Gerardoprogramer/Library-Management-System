@@ -133,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
         String subject = "Restablecimiento de contraseña";
         String body = "Usa este enlace (válido por 15 minutos): " + reserLink;
 
-        emailService.sendEmail(user.getEmail(), subject, body);
+        emailService.sendPasswordResetEmail(user.getEmail(), subject, body);
     }
 
     @Transactional

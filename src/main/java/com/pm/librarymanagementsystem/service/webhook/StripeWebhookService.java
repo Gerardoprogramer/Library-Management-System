@@ -7,6 +7,7 @@ import com.pm.librarymanagementsystem.modal.StripeWebhookEvent;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.StripeWebhookEventRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
+import com.pm.librarymanagementsystem.service.EmailService;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
@@ -28,6 +29,7 @@ public class StripeWebhookService {
     private final StripeConfig stripeConfig;
     private final PaymentRepository paymentRepository;
     private final StripeWebhookEventRepository webhookEventRepository;
+    private final EmailService emailService;
 
     public void handleWebhook(String payload, String sigHeader) {
 
@@ -116,6 +118,12 @@ public class StripeWebhookService {
         paymentRepository.save(payment);
 
         activateSubscription(payment);
+
+        emailService.sendSubscriptionEmail(
+                payment.getUser().getEmail(),
+                payment.getUser().getFullName(),
+                payment.getSubscription().getPlanName(),
+                payment.getSubscription().getEndDate());
     }
 
     private void handlePaymentFailed(Event event) {

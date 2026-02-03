@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Suscripción Activada</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 10px; }
+        h1 { color: #4CAF50; }
+        p { line-height: 1.5; }
+        .footer { font-size: 12px; color: #888; margin-top: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>¡Tu suscripción fue activada!</h1>
+    <p>Hola <strong th:text="${userName}">NombreUsuario</strong>,</p>
+    <p>Tu plan <strong th:text="${planName}">PlanNombre</strong> se ha activado correctamente.</p>
+    <p>Válido hasta: <strong th:text="${endDate}">dd/MM/yyyy</strong></p>
+    <p>Gracias por confiar en nosotros.</p>
+    <div class="footer">Library Management System &copy; 2026</div>
+</div>
+</body>
+</html>
