@@ -6,6 +6,7 @@ import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.StripeWebhookEvent;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.StripeWebhookEventRepository;
+import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
@@ -23,6 +24,7 @@ import java.util.Optional;
 @Slf4j
 public class StripeWebhookService {
 
+    private final SubscriptionRepository subscriptionRepository;
     private final StripeConfig stripeConfig;
     private final PaymentRepository paymentRepository;
     private final StripeWebhookEventRepository webhookEventRepository;
@@ -87,7 +89,6 @@ public class StripeWebhookService {
 
         Optional<StripeObject> stripeObject =
                 event.getDataObjectDeserializer().getObject();
-
         if (stripeObject.isEmpty()) return;
 
         Session session = (Session) stripeObject.get();
@@ -113,6 +114,8 @@ public class StripeWebhookService {
         payment.setPaymentIntentId(session.getPaymentIntent());
 
         paymentRepository.save(payment);
+
+        activateSubscription(payment);
     }
 
     private void handlePaymentFailed(Event event) {
@@ -145,6 +148,20 @@ public class StripeWebhookService {
 
         paymentRepository.save(payment);
     }
+
+    private void activateSubscription(Payment payment) {
+
+        if (payment.getSubscription() == null) return;
+
+        var subscription = payment.getSubscription();
+
+        if (subscription.isActive()) return;
+
+        subscription.setActive(true);
+
+        subscriptionRepository.save(subscription);
+    }
+
 
 }
 

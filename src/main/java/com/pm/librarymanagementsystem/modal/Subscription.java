@@ -59,7 +59,7 @@ public class Subscription {
     private LocalDateTime endDate;
 
     @Column(nullable = false)
-    private boolean active = true;
+    private boolean active = false;
 
     @Column(nullable = false)
     private boolean autoRenew = false;
