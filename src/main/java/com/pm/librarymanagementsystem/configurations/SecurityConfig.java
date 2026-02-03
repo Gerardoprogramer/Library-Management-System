@@ -30,6 +30,7 @@ public class SecurityConfig {
                         SessionCreationPolicy.STATELESS
                 ))
                 .authorizeHttpRequests(authorize ->authorize
+                        .requestMatchers("/api/v1/payments/webhook").permitAll()
                         .requestMatchers("/api/subscription-plans/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/subscriptions/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

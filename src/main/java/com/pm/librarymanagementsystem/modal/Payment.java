@@ -19,13 +19,16 @@ import java.time.LocalDateTime;
 @Table(indexes = {
         @Index(name = "idx_payment_user", columnList = "user_id"),
         @Index(name = "idx_payment_status", columnList = "paymentStatus"),
-        @Index(name = "idx_payment_created", columnList = "createdAt")
+        @Index(name = "idx_payment_created", columnList = "createdAt"),
+        @Index(name = "idx_payment_session", columnList = "checkoutSessionId"),
+        @Index(name = "idx_payment_intent", columnList = "paymentIntentId")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,8 +38,8 @@ public class Payment {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subscription_plan_id", nullable = false)
-    private SubscriptionPlan subscriptionPlan;
+    @JoinColumn(name = "subscription_id", nullable = false)
+    private Subscription subscription;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,28 +52,27 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentGateway paymentGateway;
 
-    @Column(precision = 19, scale = 4)
+    @Column(precision = 19, scale = 4, nullable = false)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Currency currency;
 
     @Column(unique = true)
     private String transactionId;
 
     @Column(unique = true)
-    private String gatewayPaymentId;
+    private String checkoutSessionId;
 
     @Column(unique = true)
-    private String gatewayOrderId;
+    private String paymentIntentId;
 
-    @Column(nullable = true)
-    private String gatewaySignature;
+    @Column(unique = true)
+    private String chargeId;
 
-    @Column(nullable = true)
     private String description;
 
-    @Column(nullable = true)
     private String failureReason;
 
     private LocalDateTime initiatedAt;
