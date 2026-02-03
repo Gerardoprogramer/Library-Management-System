@@ -2,6 +2,7 @@ package com.pm.librarymanagementsystem.controller;
 
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatusResponse;
@@ -9,6 +10,9 @@ import com.pm.librarymanagementsystem.service.PaymentService;
 import com.pm.librarymanagementsystem.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
@@ -61,4 +65,17 @@ public class PaymentController {
                 paymentService.refundPayment(paymentId)
         );
     }
+
+    @GetMapping("/history")
+    public PageResponse<PaymentResponse> getPaymentHistory(
+            @PageableDefault(
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+
+        return paymentService.getPaymentHistory(pageable);
+    }
+
 }

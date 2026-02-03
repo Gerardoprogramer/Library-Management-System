@@ -4,22 +4,28 @@ import com.pm.librarymanagementsystem.domain.PaymentGateway;
 import com.pm.librarymanagementsystem.domain.PaymentStatus;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.PaymentMapper;
+import com.pm.librarymanagementsystem.mapper.UserMapper;
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.*;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
+import com.pm.librarymanagementsystem.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -31,6 +37,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentGatewayService paymentGatewayService;
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserService userService;
 
     @Override
     public InitiatePaymentResponse initiatePayment(Long userId, InitiatePaymentRequest request) {
@@ -110,6 +117,24 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
 
         return PaymentMapper.toResponse(payment);
+    }
+
+    @Override
+    public PageResponse<PaymentResponse> getPaymentHistory(Pageable pageable) {
+        User user  = userService.getCurrentUserEntity();
+
+        Page<Payment> payment = paymentRepository.findByUserId(user.getId(), pageable);
+        Page<PaymentResponse> mappedPage = payment.map(PaymentMapper::toResponse);
+
+        return new PageResponse<>(
+                mappedPage.getContent(),
+                mappedPage.getNumber(),
+                mappedPage.getSize(),
+                mappedPage.getTotalElements(),
+                mappedPage.getTotalPages(),
+                mappedPage.isLast(),
+                mappedPage.isFirst(),
+                mappedPage.isEmpty());
     }
 
 }
