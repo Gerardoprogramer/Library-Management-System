@@ -6,7 +6,9 @@ import com.pm.librarymanagementsystem.payload.dto.response.payment.GatewayPaymen
 import com.pm.librarymanagementsystem.payload.dto.response.payment.GatewayRefundResponse;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -76,13 +78,29 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
 
     @Override
     public GatewayRefundResponse refundPayment(Payment payment) {
-        // Aquí después iría Stripe SDK refund.create()
+        try {
 
-        return new GatewayRefundResponse(
-                true,
-                "re_fake_123",
-                "Refund procesado correctamente"
-        );
+            RefundCreateParams params =
+                    RefundCreateParams.builder()
+                            .setPaymentIntent(payment.getPaymentIntentId())
+                            .build();
+
+            Refund refund = Refund.create(params);
+
+            return new GatewayRefundResponse(
+                    true,
+                    refund.getId(),
+                    refund.getStatus()
+            );
+
+        } catch (StripeException e) {
+
+            return new GatewayRefundResponse(
+                    false,
+                    null,
+                    e.getMessage()
+            );
+        }
     }
 
     @Override
