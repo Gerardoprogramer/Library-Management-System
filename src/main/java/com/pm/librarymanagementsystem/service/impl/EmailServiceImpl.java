@@ -49,6 +49,21 @@ public class EmailServiceImpl implements EmailService {
         ), "Restablecer tu contraseña");
     }
 
+    @Override
+    public void sendRenewalPaymentRequiredEmail(String to, String userName, String planName, String renewalLink, LocalDateTime endDate) {
+        sendEmailTemplate(
+                to,
+                "subscription-renewal-required",
+                Map.of(
+                        "userName", userName,
+                        "planName", planName,
+                        "renewalLink", renewalLink,
+                        "endDate", endDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                ),
+                "Acción requerida: Renueva tu suscripción"
+        );
+    }
+
     private void sendEmailTemplate(String to, String templateName, Map<String, Object> variables, String subject) {
         try {
             Context context = new Context();

@@ -25,4 +25,13 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findExpiredActiveSubscriptions(
             @Param("today") LocalDateTime today
     );
+
+    @Query("""
+    SELECT s FROM Subscription s
+    WHERE s.autoRenew = true
+      AND s.active = true
+      AND s.nextBillingDate <= :now
+""")
+    List<Subscription> findSubscriptionsDueForRenewal(LocalDateTime now);
+
 }

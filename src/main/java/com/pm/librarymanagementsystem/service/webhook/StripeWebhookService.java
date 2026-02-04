@@ -4,6 +4,7 @@ import com.pm.librarymanagementsystem.configurations.StripeConfig;
 import com.pm.librarymanagementsystem.domain.PaymentStatus;
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.StripeWebhookEvent;
+import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.StripeWebhookEventRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
@@ -13,6 +14,7 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class StripeWebhookService {
     private final StripeWebhookEventRepository webhookEventRepository;
     private final EmailService emailService;
 
+    @Transactional
     public void handleWebhook(String payload, String sigHeader) {
 
         Event event = constructEvent(payload, sigHeader);
@@ -115,15 +118,22 @@ public class StripeWebhookService {
         payment.setTransactionId(session.getId());
         payment.setPaymentIntentId(session.getPaymentIntent());
 
-        paymentRepository.save(payment);
 
-        activateSubscription(payment);
+        if (payment.isRenewalPayment()) {
+            handleSubscriptionRenewalSuccess(payment.getSubscription());
+            payment.setRenewalPayment(false);
+        } else {
+            activateSubscription(payment);
+        }
+
+        paymentRepository.save(payment);
 
         emailService.sendSubscriptionEmail(
                 payment.getUser().getEmail(),
                 payment.getUser().getFullName(),
                 payment.getSubscription().getPlanName(),
                 payment.getSubscription().getEndDate());
+
     }
 
     private void handlePaymentFailed(Event event) {
@@ -170,6 +180,27 @@ public class StripeWebhookService {
         subscriptionRepository.save(subscription);
     }
 
+
+    private void handleSubscriptionRenewalSuccess(Subscription subscription) {
+
+        subscription.setRenewalAttemptCount(0);
+        subscription.setLastRenewalAttempt(null);
+
+        subscription.setStartDate(subscription.getEndDate());
+
+        subscription.setEndDate(
+                subscription.getEndDate()
+                        .plusDays(subscription.getSubscriptionPlan().getDurationDays())
+        );
+
+        subscription.setNextBillingDate(
+                subscription.getEndDate().minusDays(1)
+        );
+
+        subscription.setActive(true);
+
+        subscriptionRepository.save(subscription);
+    }
 
 }
 

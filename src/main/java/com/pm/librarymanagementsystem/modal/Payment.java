@@ -75,6 +75,8 @@ public class Payment {
 
     private String failureReason;
 
+    private boolean renewalPayment;
+
     private LocalDateTime initiatedAt;
 
     private LocalDateTime completedAt;

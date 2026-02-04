@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Renovación de Suscripción Requerida</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: #ff9800;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 24px;
+            background: #ff9800;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Renovación de suscripción requerida</h1>
+
+    <p>
+        Hola <strong th:text="${userName}">Usuario</strong>,
+    </p>
+
+    <p>
+        Tu suscripción al plan
+        <strong th:text="${planName}">Plan</strong>
+        está próxima a vencer.
+    </p>
+
+    <p>
+        Fecha de vencimiento:
+        <strong th:text="${endDate}">Fecha</strong>
+    </p>
+
+    <div class="warning-box">
+        Para mantener acceso sin interrupciones, debes completar el pago de renovación.
+    </div>
+
+    <p>
+        <a class="button"
+           th:href="${renewalLink}">
+            Renovar suscripción
+        </a>
+    </p>
+
+    <p style="font-size: 13px; color: #777;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:
+        <br>
+        <span th:text="${renewalLink}">link</span>
+    </p>
+
+    <div class="footer">
+        Library Management System © 2026
+    </div>
+
+</div>
+
+</body>
+</html>

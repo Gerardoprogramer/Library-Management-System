@@ -64,6 +64,12 @@ public class Subscription {
     @Column(nullable = false)
     private boolean autoRenew = false;
 
+    private LocalDateTime nextBillingDate;
+
+    private LocalDateTime lastRenewalAttempt;
+
+    private Integer renewalAttemptCount = 0;
+
     private LocalDateTime cancelledAt;
 
     @Column(length = 255)
@@ -79,7 +85,6 @@ public class Subscription {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
 
     @PrePersist
     public void prePersist() {

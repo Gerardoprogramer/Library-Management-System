@@ -84,5 +84,59 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                 "Refund procesado correctamente"
         );
     }
+
+    @Override
+    public GatewayPaymentResponse createCheckoutSessionForRenewal(Payment payment) {
+
+        try {
+
+            SessionCreateParams params =
+                    SessionCreateParams.builder()
+                            .setMode(SessionCreateParams.Mode.PAYMENT)
+
+                            .setSuccessUrl("http://localhost:5173/payment/success")
+                            .setCancelUrl("http://localhost:5173/payment/cancel")
+
+                            .addPaymentMethodType(
+                                    SessionCreateParams.PaymentMethodType.CARD
+                            )
+
+                            .addLineItem(
+                                    SessionCreateParams.LineItem.builder()
+                                            .setQuantity(1L)
+                                            .setPriceData(
+                                                    SessionCreateParams.LineItem.PriceData.builder()
+                                                            .setCurrency("usd")
+                                                            .setUnitAmount(
+                                                                    payment.getAmount()
+                                                                            .multiply(BigDecimal.valueOf(100))
+                                                                            .longValue()
+                                                            )
+                                                            .setProductData(
+                                                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                            .setName(payment.getDescription())
+                                                                            .build()
+                                                            )
+                                                            .build()
+                                            )
+                                            .build()
+                            )
+
+                            .putMetadata("paymentId", payment.getId().toString())
+
+                            .build();
+
+            Session session = Session.create(params);
+
+            return new GatewayPaymentResponse(
+                    session.getUrl(),
+                    session.getId(),
+                    session.getPaymentIntent()
+            );
+
+        } catch (StripeException e) {
+            throw new RuntimeException("Stripe renewal error", e);
+        }
+    }
 }
 

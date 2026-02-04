@@ -1,7 +1,9 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.domain.Currency;
 import com.pm.librarymanagementsystem.domain.PaymentGateway;
 import com.pm.librarymanagementsystem.domain.PaymentStatus;
+import com.pm.librarymanagementsystem.domain.PaymentType;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.PaymentMapper;
 import com.pm.librarymanagementsystem.mapper.UserMapper;
@@ -24,8 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -135,6 +137,26 @@ public class PaymentServiceImpl implements PaymentService {
                 mappedPage.isLast(),
                 mappedPage.isFirst(),
                 mappedPage.isEmpty());
+    }
+
+    @Override
+    public Payment createSubscriptionRenewalPayment(Subscription subscription) {
+        Payment payment = new Payment();
+
+        payment.setUser(subscription.getUser());
+        payment.setAmount(BigDecimal.valueOf(subscription.getPrice()));
+        payment.setCurrency(Currency.USD);
+        payment.setPaymentType(PaymentType.MEMBERSHIP);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setRenewalPayment(true);
+
+        payment.setDescription(
+                "Auto renewal subscription - " + subscription.getPlanName()
+        );
+
+        payment.setSubscription(subscription);
+
+        return paymentRepository.save(payment);
     }
 
 }
