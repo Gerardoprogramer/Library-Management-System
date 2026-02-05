@@ -115,6 +115,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        payment.getSubscription().setActive(false);
+
 
         paymentRepository.save(payment);
 
