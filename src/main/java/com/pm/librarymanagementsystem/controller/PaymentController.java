@@ -1,6 +1,7 @@
 package com.pm.librarymanagementsystem.controller;
 
 import com.pm.librarymanagementsystem.modal.User;
+import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
@@ -26,7 +27,7 @@ public class PaymentController {
     private final UserService userService;
 
     @PostMapping("/initiate")
-    public ResponseEntity<InitiatePaymentResponse> initiatePayment(
+    public ResponseEntity<ApiResponse<InitiatePaymentResponse>> initiatePayment(
             @RequestBody @Valid InitiatePaymentRequest request
     ) {
 
@@ -34,40 +35,49 @@ public class PaymentController {
 
         InitiatePaymentResponse response = paymentService.initiatePayment(user.getId(), request);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Pago iniciado correctamente",
+                response
+        ));
     }
 
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentResponse> getPaymentById(
+    public ResponseEntity<ApiResponse<PaymentResponse>> getPaymentById(
             @PathVariable Long paymentId
     ) {
-        return ResponseEntity.ok(
+        return ResponseEntity.ok(ApiResponse.success(
+                "Pago obtenido correctamente",
                 paymentService.getPaymentById(paymentId)
+                )
         );
     }
 
     @GetMapping("/{paymentId}/status")
-    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(
+    public ResponseEntity<ApiResponse<PaymentStatusResponse>> getPaymentStatus(
             @PathVariable Long paymentId
     ) {
-        return ResponseEntity.ok(
+        return ResponseEntity.ok(ApiResponse.success(
+                "Estado del pago obtenido correctamente",
                 paymentService.getPaymentStatus(paymentId)
+                )
         );
     }
 
     @PostMapping("/{paymentId}/refund")
-    public ResponseEntity<PaymentResponse> refundPayment(
+    public ResponseEntity<ApiResponse<PaymentResponse>> refundPayment(
             @PathVariable Long paymentId
     ) throws Exception {
 
-        return ResponseEntity.ok(
+        return ResponseEntity.ok(ApiResponse.success(
+                "Reembolso procesado correctamente",
                 paymentService.refundPayment(paymentId)
+                )
         );
     }
 
     @GetMapping("/history")
-    public PageResponse<PaymentResponse> getPaymentHistory(
+    public ResponseEntity<ApiResponse<PageResponse<PaymentResponse>>> getPaymentHistory(
             @PageableDefault(
                     size = 10,
                     sort = "createdAt",
@@ -75,7 +85,9 @@ public class PaymentController {
             ) Pageable pageable
     ) {
 
-        return paymentService.getPaymentHistory(pageable);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Historial de pagos obtenido correctamente",
+                paymentService.getPaymentHistory(pageable)
+        ));
     }
-
 }
