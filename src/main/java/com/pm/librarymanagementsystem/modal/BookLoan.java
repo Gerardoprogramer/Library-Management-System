@@ -3,10 +3,7 @@ package com.pm.librarymanagementsystem.modal;
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.domain.BookLoanType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -24,6 +21,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class BookLoan {
 
     @Id
@@ -50,6 +48,8 @@ public class BookLoan {
     private LocalDateTime checkoutDate;
 
     @Column(nullable = false)
+    private LocalDateTime dueDate;
+
     private LocalDateTime returnDate;
 
     @Column(nullable = false)
@@ -74,4 +74,14 @@ public class BookLoan {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public boolean isActive(){
+        return status == BookLoanStatus.CHECKED_OUT || status == BookLoanStatus.OVERDUE;
+    }
+
+    public boolean canRenew(){
+        return status == BookLoanStatus.CHECKED_OUT && !overdue && renewalCount < maxRenewals;
+    }
+
+
 }

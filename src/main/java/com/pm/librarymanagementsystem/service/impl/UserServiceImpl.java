@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.UserMapper;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.response.user.UserResponse;
@@ -43,4 +44,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
     }
+
+    @Override
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(()-> new NotFoundException("No se encontro el Usuario"));
+    }
+
 }

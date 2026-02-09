@@ -12,4 +12,6 @@ public interface UserService {
     public List<UserResponse>  getAllUsers();
 
     User getCurrentUserEntity();
+
+    User findById(Long id);
 }
