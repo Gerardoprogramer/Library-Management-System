@@ -37,9 +37,9 @@ public class Payment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subscription_id", nullable = false)
-    private Subscription subscription;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payable_id")
+    private Payable payable;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -15,7 +15,6 @@ import java.time.temporal.ChronoUnit;
 @Table(
         name = "subscriptions",
         indexes = {
-                @Index(name = "idx_subscription_user", columnList = "user_id"),
                 @Index(name = "idx_subscription_active", columnList = "active"),
                 @Index(name = "idx_subscription_end_date", columnList = "end_date")
         }
@@ -24,14 +23,7 @@ import java.time.temporal.ChronoUnit;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subscription {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+public class Subscription extends Payable{
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "subscription_plan_id", nullable = false)
@@ -74,17 +66,6 @@ public class Subscription {
 
     @Column(length = 255)
     private String cancellationReason;
-
-    @Column(length = 500)
-    private String notes;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {

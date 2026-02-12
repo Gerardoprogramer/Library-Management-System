@@ -7,12 +7,14 @@ import com.pm.librarymanagementsystem.domain.PaymentType;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.PaymentMapper;
 import com.pm.librarymanagementsystem.mapper.UserMapper;
+import com.pm.librarymanagementsystem.modal.Payable;
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.*;
+import com.pm.librarymanagementsystem.repository.FineRepository;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
@@ -40,21 +42,29 @@ public class PaymentServiceImpl implements PaymentService {
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserService userService;
+    private final FineRepository fineRepository;
 
     @Override
     public InitiatePaymentResponse initiatePayment(Long userId, InitiatePaymentRequest request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Payable payable = null;
+        if(request.paymentType() == PaymentType.MEMBERSHIP){
+            payable = subscriptionRepository.findById(request.payableId())
+                    .orElseThrow(() -> new RuntimeException("Subscripción no encontrada"));
+        }else if(request.paymentType() == PaymentType.FINE){
+            payable = fineRepository.findById(request.payableId())
+                    .orElseThrow(() -> new RuntimeException("No se encontro la Multa"));
+        }
 
-        Subscription subscription = subscriptionRepository.findById(request.subscriptionId())
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
 
         // Mapper base
         Payment payment = PaymentMapper.fromInitiateRequest(request);
 
         payment.setUser(user);
-        payment.setSubscription(subscription);
+        payment.setPayable(payable);
+        payment.setPaymentType(request.paymentType());
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setPaymentGateway(PaymentGateway.STRIPE);
         payment.setInitiatedAt(LocalDateTime.now());
@@ -115,7 +125,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
-        payment.getSubscription().setActive(false);
+
+        if(payment.getPayable() instanceof Subscription s){
+            s.setActive(false);
+        }
 
 
         paymentRepository.save(payment);
@@ -156,7 +169,7 @@ public class PaymentServiceImpl implements PaymentService {
                 "Auto renewal subscription - " + subscription.getPlanName()
         );
 
-        payment.setSubscription(subscription);
+        payment.setPayable(subscription);
 
         return paymentRepository.save(payment);
     }

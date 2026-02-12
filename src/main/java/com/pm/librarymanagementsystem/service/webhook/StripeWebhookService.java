@@ -1,10 +1,10 @@
 package com.pm.librarymanagementsystem.service.webhook;
 
 import com.pm.librarymanagementsystem.configurations.StripeConfig;
+import com.pm.librarymanagementsystem.domain.FineStatus;
 import com.pm.librarymanagementsystem.domain.PaymentStatus;
-import com.pm.librarymanagementsystem.modal.Payment;
-import com.pm.librarymanagementsystem.modal.StripeWebhookEvent;
-import com.pm.librarymanagementsystem.modal.Subscription;
+import com.pm.librarymanagementsystem.modal.*;
+import com.pm.librarymanagementsystem.repository.FineRepository;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.StripeWebhookEventRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
@@ -17,6 +17,7 @@ import com.stripe.net.Webhook;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class StripeWebhookService {
     private final PaymentRepository paymentRepository;
     private final StripeWebhookEventRepository webhookEventRepository;
     private final EmailService emailService;
+    private final FineRepository fineRepository;
 
     @Transactional
     public void handleWebhook(String payload, String sigHeader) {
@@ -118,21 +120,25 @@ public class StripeWebhookService {
         payment.setTransactionId(session.getId());
         payment.setPaymentIntentId(session.getPaymentIntent());
 
+        Payable payable = (Payable) Hibernate.unproxy(payment.getPayable());
+        if(payable instanceof Subscription s){
+            if (payment.isRenewalPayment()) {
+                handleSubscriptionRenewalSuccess(s);
+                payment.setRenewalPayment(false);
+            } else {
+                activateSubscription(s);
+            }
 
-        if (payment.isRenewalPayment()) {
-            handleSubscriptionRenewalSuccess(payment.getSubscription());
-            payment.setRenewalPayment(false);
-        } else {
-            activateSubscription(payment);
+            emailService.sendSubscriptionEmail(
+                    payment.getUser().getEmail(),
+                    payment.getUser().getFullName(),
+                    s.getPlanName(),
+                    s.getEndDate());
+        }else if(payable instanceof Fine f){
+            CancelFine(f);
         }
 
         paymentRepository.save(payment);
-
-        emailService.sendSubscriptionEmail(
-                payment.getUser().getEmail(),
-                payment.getUser().getFullName(),
-                payment.getSubscription().getPlanName(),
-                payment.getSubscription().getEndDate());
 
     }
 
@@ -167,11 +173,7 @@ public class StripeWebhookService {
         paymentRepository.save(payment);
     }
 
-    private void activateSubscription(Payment payment) {
-
-        if (payment.getSubscription() == null) return;
-
-        var subscription = payment.getSubscription();
+    private void activateSubscription(Subscription subscription) {
 
         if (subscription.isActive()) return;
 
@@ -180,6 +182,13 @@ public class StripeWebhookService {
         subscriptionRepository.save(subscription);
     }
 
+    private void CancelFine(Fine fine){
+        if(fine.getStatus() != FineStatus.PENDING) return;
+
+        fine.setStatus(FineStatus.PAID);
+
+        fineRepository.save(fine);
+    }
 
     private void handleSubscriptionRenewalSuccess(Subscription subscription) {
 

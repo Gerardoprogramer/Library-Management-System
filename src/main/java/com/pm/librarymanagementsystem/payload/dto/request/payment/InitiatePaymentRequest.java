@@ -3,14 +3,15 @@ package com.pm.librarymanagementsystem.payload.dto.request.payment;
 import com.pm.librarymanagementsystem.domain.Currency;
 import com.pm.librarymanagementsystem.domain.PaymentType;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 
+@Builder
 public record InitiatePaymentRequest(
 
-        Long bookLoanId,
-
-        Long subscriptionId,
+        @NotNull
+        Long payableId,
 
         @NotNull(message = "El tipo de pago es obligatorio")
         PaymentType paymentType,
