@@ -20,7 +20,7 @@ public interface GenreService {
 
     void deleteGenre(Long id);
 
-    void hardDeleGenre(Long id);
+    void hardDeleteGenre(Long id);
 
     List<GenreResponse> getAllActiveGenresWithSubGenres();
 

@@ -89,7 +89,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public void hardDeleGenre(Long id) {
+    public void hardDeleteGenre(Long id) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 

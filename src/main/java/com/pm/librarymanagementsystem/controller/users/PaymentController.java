@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.controller;
+package com.pm.librarymanagementsystem.controller.users;
 
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,8 +46,8 @@ public class PaymentController {
             @PathVariable Long paymentId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Pago obtenido correctamente",
-                paymentService.getPaymentById(paymentId)
+                        "Pago obtenido correctamente",
+                        paymentService.getPaymentById(paymentId)
                 )
         );
     }
@@ -58,20 +57,8 @@ public class PaymentController {
             @PathVariable Long paymentId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Estado del pago obtenido correctamente",
-                paymentService.getPaymentStatus(paymentId)
-                )
-        );
-    }
-
-    @PostMapping("/{paymentId}/refund")
-    public ResponseEntity<ApiResponse<PaymentResponse>> refundPayment(
-            @PathVariable Long paymentId
-    ) throws Exception {
-
-        return ResponseEntity.ok(ApiResponse.success(
-                "Reembolso procesado correctamente",
-                paymentService.refundPayment(paymentId)
+                        "Estado del pago obtenido correctamente",
+                        paymentService.getPaymentStatus(paymentId)
                 )
         );
     }

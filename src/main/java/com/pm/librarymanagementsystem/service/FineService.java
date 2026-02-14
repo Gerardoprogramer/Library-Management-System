@@ -3,7 +3,7 @@ package com.pm.librarymanagementsystem.service;
 import com.pm.librarymanagementsystem.domain.FineStatus;
 import com.pm.librarymanagementsystem.domain.FineType;
 import com.pm.librarymanagementsystem.payload.dto.request.fine.FineRequest;
-import com.pm.librarymanagementsystem.payload.dto.request.fine.waiveFineRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.fine.WaiveFineRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.fine.FineResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
@@ -19,7 +19,7 @@ public interface FineService {
 
     void markFineAsPaid(Long fineId, BigDecimal amount, String transactionId);
 
-    FineResponse waiveFine(waiveFineRequest request);
+    FineResponse waiveFine(WaiveFineRequest request);
 
     PageResponse<FineResponse> getMyFines(FineStatus status, FineType type, Pageable pageable);
 

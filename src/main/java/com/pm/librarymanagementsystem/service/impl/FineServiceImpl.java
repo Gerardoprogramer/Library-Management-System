@@ -10,7 +10,7 @@ import com.pm.librarymanagementsystem.modal.BookLoan;
 import com.pm.librarymanagementsystem.modal.Fine;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.fine.FineRequest;
-import com.pm.librarymanagementsystem.payload.dto.request.fine.waiveFineRequest;
+import com.pm.librarymanagementsystem.payload.dto.request.fine.WaiveFineRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.fine.FineResponse;
@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -101,7 +100,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    public FineResponse waiveFine(waiveFineRequest request) {
+    public FineResponse waiveFine(WaiveFineRequest request) {
         Fine fine = fineRepository.findById(request.fineId())
                 .orElseThrow( ()-> new NotFoundException("Multa no encontrada"));
 

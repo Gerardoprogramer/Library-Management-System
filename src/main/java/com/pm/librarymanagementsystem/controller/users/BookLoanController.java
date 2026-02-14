@@ -1,11 +1,10 @@
-package com.pm.librarymanagementsystem.controller;
+package com.pm.librarymanagementsystem.controller.users;
 
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckinRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckoutRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanRenewalRequest;
-import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoansSearchRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 import com.pm.librarymanagementsystem.service.BookLoanService;
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/book-loans")
+@RequestMapping("/api/v1/book-loans")
 public class BookLoanController {
 
     private final BookLoanService bookLoanService;
@@ -27,23 +26,11 @@ public class BookLoanController {
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<BookLoanResponse>> checkoutBook(
             @Valid @RequestBody BookLoanCheckoutRequest request
-            ){
-
-            return ResponseEntity.ok(ApiResponse.success(
-                    "Préstamo creado correctamente",
-                    bookLoanService.checkoutBook(request)
-            ));
-    }
-
-    @PostMapping("/admin/users/{userId}/checkout")
-    public ResponseEntity<ApiResponse<BookLoanResponse>> checkoutForUser(
-               @PathVariable Long userId,
-               @Valid @RequestBody BookLoanCheckoutRequest request
-        ){
+    ){
 
         return ResponseEntity.ok(ApiResponse.success(
                 "Préstamo creado correctamente",
-                bookLoanService.checkoutBookForUser(userId, request)
+                bookLoanService.checkoutBook(request)
         ));
     }
 
@@ -83,28 +70,5 @@ public class BookLoanController {
                 "Préstamos obtenidos correctamente",
                 bookLoanService.getMyBookLoans(status, pageable)
         ));
-    }
-
-    @PostMapping("/search")
-    public ResponseEntity<ApiResponse<PageResponse<BookLoanResponse>>> getAllBookLoans(
-            @RequestBody BookLoansSearchRequest request,
-            @PageableDefault(
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
-    ){
-
-        return ResponseEntity.ok(ApiResponse.success(
-              "Préstamos obtenidos correctamente",
-                bookLoanService.getBookLoans(request, pageable)
-        ));
-    }
-
-    @PostMapping("/admin/update-overdue")
-    public ResponseEntity<ApiResponse<Integer>> updateOverdueBookLoans(){
-
-        return ResponseEntity.ok(ApiResponse.success("Préstamos vencidos actualizados correctamente",
-                bookLoanService.updateOverdueBookLoan()));
     }
 }

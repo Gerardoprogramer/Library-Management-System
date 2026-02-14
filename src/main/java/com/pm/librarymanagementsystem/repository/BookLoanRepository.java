@@ -62,4 +62,6 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
            @Param("startDate") LocalDateTime startDate,
            @Param("endDate") LocalDateTime endDate,
            Pageable pageable);
+
+    boolean existsByUserIdAndBookIdAndStatus(Long userId, Long bookId, BookLoanStatus status);
 }
