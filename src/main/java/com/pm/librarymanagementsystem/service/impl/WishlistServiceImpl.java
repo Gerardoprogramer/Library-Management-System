@@ -59,7 +59,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     public PageResponse<WishlistResponse> getMyWishlist(Pageable pageable) {
         User user = userService.getCurrentUserEntity();
-        Page<Wishlist> wishlistPage = wishlistRepository.findByUserId(user.getId());
+        Page<Wishlist> wishlistPage = wishlistRepository.findByUserId(user.getId(), pageable);
 
         Page<WishlistResponse> mappedPage = wishlistPage.map(WishlistMapper::toResponse);
 
