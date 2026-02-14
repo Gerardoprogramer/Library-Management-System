@@ -30,11 +30,10 @@ public class SecurityConfig {
                         SessionCreationPolicy.STATELESS
                 ))
                 .authorizeHttpRequests(authorize ->authorize
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/payments/webhook").permitAll()
-                        .requestMatchers("/api/subscription-plans/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/subscriptions/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(new JwtValidator(jwtSecret), BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
