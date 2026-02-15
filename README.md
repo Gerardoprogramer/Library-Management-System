@@ -6,13 +6,13 @@ A comprehensive library management system built with Spring Boot that enables li
   
 ### Core Library Operations  
 - **Book Management**: Complete CRUD operations for managing the library's book catalog   
-- **Book Loans**: Track book checkouts with due dates, renewals, and overdue management [0-cite-1](#0-cite-1)   
-- **Reservations**: Queue system for books that are currently unavailable [0-cite-2](#0-cite-2)   
-- **Fine Management**: Automated fine calculation for overdue books and damages [0-cite-3](#0-cite-3)   
+- **Book Loans**: Track book checkouts with due dates, renewals, and overdue management  
+- **Reservations**: Queue system for books that are currently unavailable   
+- **Fine Management**: Automated fine calculation for overdue books and damages  
   
 ### User Engagement  
-- **Wishlist**: Users can save books for future reading [0-cite-4](#0-cite-4)   
-- **Book Reviews**: Rate and review books (requires completed loan) [0-cite-5](#0-cite-5)   
+- **Wishlist**: Users can save books for future reading  
+- **Book Reviews**: Rate and review books (requires completed loan)  
   
 ## Technology Stack  
   
@@ -24,18 +24,18 @@ A comprehensive library management system built with Spring Boot that enables li
 ## Key Business Rules  
   
 ### Book Loans  
-- Maximum 2 renewals per loan [0-cite-6](#0-cite-6)   
-- Automatic overdue tracking [0-cite-7](#0-cite-7)   
-- Renewals only allowed for non-overdue books [0-cite-8](#0-cite-8)   
+- Maximum 2 renewals per loan  
+- Automatic overdue tracking  
+- Renewals only allowed for non-overdue books 
   
 ### Reservations  
-- Queue-based system with position tracking [0-cite-9](#0-cite-9)   
-- Automatic expiration of available reservations [0-cite-10](#0-cite-10)   
+- Queue-based system with position tracking  
+- Automatic expiration of available reservations   
   
 ### Reviews  
 - Users can only review books they've returned   
-- Rating scale: 1-5 stars [0-cite-11](#0-cite-11)   
-- Review text: 10-2000 characters [0-cite-12](#0-cite-12)   
+- Rating scale: 1-5 stars [0-cite-11]  
+- Review text: 10-2000 characters  
   
 ## API Structure  
   
