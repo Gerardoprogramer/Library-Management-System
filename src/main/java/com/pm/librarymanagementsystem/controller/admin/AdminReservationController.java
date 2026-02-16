@@ -15,6 +15,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/reservations")
@@ -23,7 +25,7 @@ public class AdminReservationController {
 
     @PostMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<ReservationResponse>> createReservationForUser(
-            @PathVariable Long userId,
+            @PathVariable UUID userId,
             @Valid @RequestBody ReservationRequest request
     ){
         return ResponseEntity.ok(ApiResponse.success(
@@ -34,7 +36,7 @@ public class AdminReservationController {
 
     @PostMapping("/{id}/fulfill")
     public ResponseEntity<ApiResponse<ReservationResponse>> fulfillReservation(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam Integer checkoutDays
     ){
         return ResponseEntity.ok(ApiResponse.success(
@@ -45,8 +47,8 @@ public class AdminReservationController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> searchReservations(
-            @RequestParam Long userId,
-            @RequestParam(required = false)Long bookId,
+            @RequestParam UUID userId,
+            @RequestParam(required = false)UUID bookId,
             @RequestParam(required = false) ReservationStatus status,
             @RequestParam(required = false)Boolean activeOnly,
             @PageableDefault(

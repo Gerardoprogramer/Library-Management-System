@@ -7,20 +7,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface GenreService {
 
     GenreResponse createGenre(CreateGenreRequest request);
 
-    GenreResponse updateGenre(Long id, UpdateGenreRequest request);
+    GenreResponse updateGenre(UUID id, UpdateGenreRequest request);
 
     List<GenreResponse> getAllGenres();
 
-    GenreResponse getGenreById(Long id);
+    GenreResponse getGenreById(UUID id);
 
-    void deleteGenre(Long id);
+    void deleteGenre(UUID id);
 
-    void hardDeleteGenre(Long id);
+    void hardDeleteGenre(UUID id);
 
     List<GenreResponse> getAllActiveGenresWithSubGenres();
 
@@ -30,5 +31,5 @@ public interface GenreService {
 
     long getTotalActiveGenres();
 
-    long getBookCountByGenreId(Long id);
+    long getBookCountByGenreId(UUID id);
 }

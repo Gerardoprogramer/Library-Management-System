@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record CreateGenreRequest(
 
         @NotBlank(message = "El código de género es obligatorio")
@@ -18,5 +20,5 @@ public record CreateGenreRequest(
         @Min(value = 0, message = "El orden de visualización no puede ser negativo")
         Integer displayOrder,
 
-        Long parentGenreId
+        UUID parentGenreId
 ) {}

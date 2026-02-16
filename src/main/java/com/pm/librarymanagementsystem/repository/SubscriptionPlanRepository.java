@@ -3,7 +3,9 @@ package com.pm.librarymanagementsystem.repository;
 import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, Long> {
+import java.util.UUID;
+
+public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, UUID> {
 
     Boolean existsByPlanCode(String planCode);
 }

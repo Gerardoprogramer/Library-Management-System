@@ -14,6 +14,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/fines")
@@ -23,7 +25,7 @@ public class FineController {
 
     @PostMapping("/{fineId}/pay")
     public ResponseEntity<ApiResponse<InitiatePaymentResponse>> payFine(
-            @PathVariable long fineId, @RequestParam(required = false) String  transactionId
+            @PathVariable UUID fineId, @RequestParam(required = false) String  transactionId
     ){
         return ResponseEntity.ok(ApiResponse.success(
                 "se realizo el pago de la multa correctamente",

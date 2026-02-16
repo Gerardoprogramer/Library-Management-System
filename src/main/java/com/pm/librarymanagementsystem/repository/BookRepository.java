@@ -8,8 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface BookRepository extends JpaRepository<Book, Long> {
+public interface BookRepository extends JpaRepository<Book, UUID> {
 
     Optional<Book> findByIsbn(String isbn);
 
@@ -27,7 +28,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     )
     Page<Book> searchBookswithFilters(
             @Param("searchTerm") String searchTerm,
-            @Param("genreId") Long genreId,
+            @Param("genreId") UUID genreId,
             @Param("availableOnly") boolean availableOnly,
             Pageable pageable
     );

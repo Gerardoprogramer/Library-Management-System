@@ -17,6 +17,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
@@ -43,7 +45,7 @@ public class PaymentController {
 
     @GetMapping("/{paymentId}")
     public ResponseEntity<ApiResponse<PaymentResponse>> getPaymentById(
-            @PathVariable Long paymentId
+            @PathVariable UUID paymentId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                         "Pago obtenido correctamente",
@@ -54,7 +56,7 @@ public class PaymentController {
 
     @GetMapping("/{paymentId}/status")
     public ResponseEntity<ApiResponse<PaymentStatusResponse>> getPaymentStatus(
-            @PathVariable Long paymentId
+            @PathVariable UUID paymentId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                         "Estado del pago obtenido correctamente",

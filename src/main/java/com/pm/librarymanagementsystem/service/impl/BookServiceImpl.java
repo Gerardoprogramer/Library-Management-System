@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +47,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponse getBookById(Long id) {
+    public BookResponse getBookById(UUID id) {
 
         Book book = bookRepository.findById(id)
                 .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
@@ -66,7 +67,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponse updateBook(Long id, UpdateBookRequest request) {
+    public BookResponse updateBook(UUID id, UpdateBookRequest request) {
 
         Book book = bookRepository.findById(id)
                 .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
@@ -81,7 +82,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void deleteBook(Long id) {
+    public void deleteBook(UUID id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 
@@ -90,7 +91,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void hardDeleteBook(Long id) {
+    public void hardDeleteBook(UUID id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
 

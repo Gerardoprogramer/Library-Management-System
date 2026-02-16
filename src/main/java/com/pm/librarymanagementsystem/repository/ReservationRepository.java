@@ -10,8 +10,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
 
     @Query("""
     select case when count(r) > 0 then true else false end from Reservation r
@@ -19,15 +20,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     and (r.status = 'PENDING' or r.status = 'AVAILABLE')
 """)
     boolean hasActiveReservation(
-            @Param("userId") Long userId,
-            @Param("bookId") Long bookId
+            @Param("userId") UUID userId,
+            @Param("bookId") UUID bookId
     );
 
     @Query("""
     select count(r) from Reservation r where r.user.id = :userId
     and (r.status = 'PENDING' or r.status = 'AVAILABLE')
 """)
-    long countActiveReservationsByUser(@Param("userId") Long userId);
+    long countActiveReservationsByUser(@Param("userId") UUID userId);
 
 
 
@@ -35,7 +36,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      select count(r) from Reservation r where r.book.id = :bookId
      and r.status = 'PENDING'
 """)
-    long countPendingReservationByBook(@Param("bookId") Long bookId);
+    long countPendingReservationByBook(@Param("bookId") UUID bookId);
 
 
     @Query("""
@@ -46,8 +47,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     (:activeOnly = false or (r.status = 'PENDING' or r.status = 'AVAILABLE'))
 """)
     Page<Reservation> searchReservationsWithFilters(
-            @Param("userId") Long userId,
-            @Param("bookId") Long bookId,
+            @Param("userId") UUID userId,
+            @Param("bookId") UUID bookId,
             @Param("status") ReservationStatus status,
             @Param("activeOnly") boolean activeOnly,
             Pageable pageable

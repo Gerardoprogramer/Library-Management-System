@@ -1,11 +1,13 @@
 package com.pm.librarymanagementsystem.payload.dto.response.genre;
 
+import java.util.UUID;
+
 public record GenreResponse(
-        Long id,
+        UUID id,
         String code,
         String name,
         String description,
         Integer displayOrder,
         Boolean active,
-        Long parentGenreId
+        UUID parentGenreId
 ) {}

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class GenreController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<GenreResponse>> getGenreById(
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -60,7 +61,7 @@ public class GenreController {
 
     @GetMapping("/{id}/book-count")
     public ResponseEntity<ApiResponse<Long>> getBookCountByGenreId(
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(

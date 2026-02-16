@@ -4,11 +4,13 @@ import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.wishlist.WishlistResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface WishlistService {
 
-    WishlistResponse addWishlist(Long bookId, String notes);
+    WishlistResponse addWishlist(UUID bookId, String notes);
 
-    void removeFromWishlist(Long bookId);
+    void removeFromWishlist(UUID bookId);
 
     PageResponse<WishlistResponse> getMyWishlist(Pageable pageable);
 }

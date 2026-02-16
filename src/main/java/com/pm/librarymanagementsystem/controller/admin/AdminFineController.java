@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/fines")
@@ -49,7 +51,7 @@ public class AdminFineController {
     public ResponseEntity<ApiResponse<PageResponse<FineResponse>>> getAllFines(
             @RequestParam(required = false) FineStatus status,
             @RequestParam(required = false) FineType type,
-            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) UUID userId,
             @PageableDefault(
                     size = 10,
                     sort = "createdAt",

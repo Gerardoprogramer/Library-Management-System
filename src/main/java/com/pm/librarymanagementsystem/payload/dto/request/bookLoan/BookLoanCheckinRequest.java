@@ -4,10 +4,12 @@ import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record BookLoanCheckinRequest(
 
         @NotNull(message = "El id del préstamo es obligatorio")
-        Long loanId,
+        UUID loanId,
 
         BookLoanStatus status,
 

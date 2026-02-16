@@ -10,18 +10,19 @@ import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePayme
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public interface FineService {
 
     FineResponse createFine(FineRequest request);
 
-    InitiatePaymentResponse payFine(Long fineId, String transactionId);
+    InitiatePaymentResponse payFine(UUID fineId, String transactionId);
 
-    void markFineAsPaid(Long fineId, BigDecimal amount, String transactionId);
+    void markFineAsPaid(UUID fineId, BigDecimal amount, String transactionId);
 
     FineResponse waiveFine(WaiveFineRequest request);
 
     PageResponse<FineResponse> getMyFines(FineStatus status, FineType type, Pageable pageable);
 
-    PageResponse<FineResponse> getAllFines(FineStatus status, FineType type, Long userId, Pageable pageable);
+    PageResponse<FineResponse> getAllFines(FineStatus status, FineType type, UUID userId, Pageable pageable);
 }

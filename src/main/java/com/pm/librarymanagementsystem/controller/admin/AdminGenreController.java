@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/genres")
@@ -31,7 +33,7 @@ public class AdminGenreController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<GenreResponse>> updateGenre(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UpdateGenreRequest request) {
 
         GenreResponse genre = genreService.updateGenre(id, request);
@@ -42,7 +44,7 @@ public class AdminGenreController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteGenre(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteGenre(@PathVariable UUID id) {
         genreService.deleteGenre(id);
 
         return ResponseEntity.ok(
@@ -51,7 +53,7 @@ public class AdminGenreController {
     }
 
     @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ApiResponse<Void>> hardDeleteGenre(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> hardDeleteGenre(@PathVariable UUID id) {
         genreService.hardDeleteGenre(id);
 
         return ResponseEntity.ok(

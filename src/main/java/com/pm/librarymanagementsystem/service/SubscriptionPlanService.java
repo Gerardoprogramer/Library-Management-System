@@ -6,13 +6,15 @@ import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.Creat
 import com.pm.librarymanagementsystem.payload.dto.request.SubscriptionPlan.UpdateSubscriptionPlanRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface SubscriptionPlanService {
 
     SubscriptionPlanResponse createSubscriptionPlan(CreateSubscriptionPlanRequest request);
 
-    SubscriptionPlanResponse updateSubscriptionPlan(long id, UpdateSubscriptionPlanRequest request);
+    SubscriptionPlanResponse updateSubscriptionPlan(UUID id, UpdateSubscriptionPlanRequest request);
 
-    void deleteSubscriptionPlan(Long id);
+    void deleteSubscriptionPlan(UUID id);
 
     PageResponse<SubscriptionPlanResponse> getAllSubscriptionPlans(Pageable pageable);
 

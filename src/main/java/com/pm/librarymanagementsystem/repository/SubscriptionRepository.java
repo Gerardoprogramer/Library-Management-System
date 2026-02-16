@@ -8,15 +8,16 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
+public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
 
     @Query("select s from Subscription s where s.user.id = :userId AND " +
             "s.active = true and " +
             "s.startDate <= :today and s.endDate >= :today"
     )
     Optional<Subscription> findActiveSubscriptionByUserId(
-            @Param("userId") Long userId,
+            @Param("userId") UUID userId,
             @Param("today")LocalDateTime today
             );
 

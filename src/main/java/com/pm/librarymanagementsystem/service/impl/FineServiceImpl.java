@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +57,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    public InitiatePaymentResponse payFine(Long fineId, String transactionId) {
+    public InitiatePaymentResponse payFine(UUID fineId, String transactionId) {
 
         Fine fine = fineRepository.findById(fineId).orElseThrow(
                 ()-> new NotFoundException("Multa no encontrada"));
@@ -86,7 +87,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    public void markFineAsPaid(Long fineId, BigDecimal amount, String transactionId) {
+    public void markFineAsPaid(UUID fineId, BigDecimal amount, String transactionId) {
 
         Fine fine = fineRepository.findById(fineId).orElseThrow(
                 ()-> new NotFoundException("Multa no encontrada"));
@@ -141,7 +142,7 @@ public class FineServiceImpl implements FineService {
 
     @Override
     public PageResponse<FineResponse> getAllFines(
-            FineStatus status, FineType type, Long userId, Pageable pageable) {
+            FineStatus status, FineType type, UUID userId, Pageable pageable) {
 
         Page<Fine> fines = fineRepository
                 .findAllWithFilters(userId, status, type, pageable);

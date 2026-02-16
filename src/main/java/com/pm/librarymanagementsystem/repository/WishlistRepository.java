@@ -5,11 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
+import java.util.UUID;
 
-    Page<Wishlist> findByUserId(Long userId, Pageable pageable);
+public interface WishlistRepository extends JpaRepository<Wishlist, UUID> {
 
-    boolean existsByUserIdAndBookId(Long userId, Long bookId);
+    Page<Wishlist> findByUserId(UUID userId, Pageable pageable);
 
-    Wishlist findByUserIdAndBookId(Long userId, Long bookId);
+    boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
+
+    Wishlist findByUserIdAndBookId(UUID userId, UUID bookId);
 }

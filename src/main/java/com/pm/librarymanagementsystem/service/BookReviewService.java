@@ -6,13 +6,15 @@ import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.bookReview.BookReviewResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface BookReviewService {
 
     BookReviewResponse createReview(CreateReviewRequest request);
 
-    BookReviewResponse updateReview(Long reviewId, UpdateReviewRequest updateReviewRequest);
+    BookReviewResponse updateReview(UUID reviewId, UpdateReviewRequest updateReviewRequest);
 
-    void deleteReview(Long reviewId);
+    void deleteReview(UUID reviewId);
 
-    PageResponse<BookReviewResponse> getReviewsByBookId(Long bookId, Pageable pageable);
+    PageResponse<BookReviewResponse> getReviewsByBookId(UUID bookId, Pageable pageable);
 }

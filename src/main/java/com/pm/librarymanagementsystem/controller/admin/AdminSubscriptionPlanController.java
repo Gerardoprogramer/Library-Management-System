@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/subscription-plans")
@@ -31,7 +33,7 @@ public class AdminSubscriptionPlanController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<SubscriptionPlanResponse>> updateSubscriptionPlan(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UpdateSubscriptionPlanRequest request){
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -42,7 +44,7 @@ public class AdminSubscriptionPlanController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteSubscriptionPlan(
-            @PathVariable Long id){
+            @PathVariable UUID id){
 
         subscriptionPlanService.deleteSubscriptionPlan(id);
         return ResponseEntity.ok(ApiResponse.success("Se eliminó correctamente"));

@@ -13,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/books")
@@ -22,7 +24,7 @@ public class BookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookResponse>> getBookById(
-            @PathVariable Long id){
+            @PathVariable UUID id){
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -34,7 +36,7 @@ public class BookController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> searchBooks(
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false) UUID genreId,
             @RequestParam(required = false, defaultValue = "false") Boolean availableOnly,
             @PageableDefault(
                     size = 20,

@@ -3,12 +3,13 @@ package com.pm.librarymanagementsystem.payload.dto.response.reservation;
 import com.pm.librarymanagementsystem.domain.ReservationStatus;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record ReservationResponse(
-        Long id,
+        UUID id,
 
-        Long bookId,
-        Long userId,
+        UUID bookId,
+        UUID userId,
 
         ReservationStatus status,
 

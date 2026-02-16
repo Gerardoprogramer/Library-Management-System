@@ -6,15 +6,17 @@ import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CancelSub
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface SubscriptionService {
 
     SubscriptionResponse subscribe(CreateSubscriptionRequest request);
 
     SubscriptionResponse getUsersActiveSubscription();
 
-    SubscriptionResponse cancelSubscription(Long id, CancelSubscriptionRequest request);
+    SubscriptionResponse cancelSubscription(UUID id, CancelSubscriptionRequest request);
 
-    SubscriptionResponse activateSubscription(Long subscriptionId, Long paymentId);
+    SubscriptionResponse activateSubscription(UUID subscriptionId, UUID paymentId);
 
     PageResponse<SubscriptionResponse> getAllSubscriptions(Pageable pageable);
 

@@ -6,10 +6,11 @@ import com.pm.librarymanagementsystem.domain.PaymentType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record PaymentHistoryItemResponse(
 
-        Long id,
+        UUID id,
         PaymentType paymentType,
         PaymentStatus paymentStatus,
 

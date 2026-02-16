@@ -12,18 +12,19 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
-public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
+public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
 
-    Page<BookLoan> findByUserId(Long userId, Pageable pageable);
+    Page<BookLoan> findByUserId(UUID userId, Pageable pageable);
 
     Page<BookLoan> findByStatusAndUser(User user, BookLoanStatus status, Pageable pageable);
 
     Page<BookLoan> findByStatus(BookLoanStatus status, Pageable pageable);
 
-    Page<BookLoan> findByBookId(Long bookId, Pageable pageable);
+    Page<BookLoan> findByBookId(UUID bookId, Pageable pageable);
 
-    List<BookLoan> findByBookId(Long bookId);
+    List<BookLoan> findByBookId(UUID bookId);
 
     @Query("""
     select case when count(bl) > 0 then true else false end from BookLoan bl
@@ -31,8 +32,8 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     and (bl.status = 'CHECKED_OUT' OR bl.status = 'OVERDUE')
 """)
     boolean hasActiveCheckout(
-            @Param("userId") Long userId,
-            @Param("bookId") Long bookId
+            @Param("userId") UUID userId,
+            @Param("bookId") UUID bookId
     );
 
     @Query("""
@@ -40,14 +41,14 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     and (bl.status = 'CHECKED_OUT' OR bl.status = 'OVERDUE')
 """)
     Long countActiveBookLoansByUser(
-            @Param("userId") Long userId);
+            @Param("userId") UUID userId);
 
     @Query("""
     select count(bl) from BookLoan bl where bl.user.id =:userId
     and bl.status = 'OVERDUE'
 """)
     Long countOverdueBookLoansByUser(
-            @Param("userId") Long userId);
+            @Param("userId") UUID userId);
 
     @Query("""
     select bl from BookLoan bl where bl.dueDate < :currentDate
@@ -66,5 +67,5 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
            @Param("endDate") LocalDateTime endDate,
            Pageable pageable);
 
-    boolean existsByUserIdAndBookIdAndStatus(Long userId, Long bookId, BookLoanStatus status);
+    boolean existsByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, BookLoanStatus status);
 }

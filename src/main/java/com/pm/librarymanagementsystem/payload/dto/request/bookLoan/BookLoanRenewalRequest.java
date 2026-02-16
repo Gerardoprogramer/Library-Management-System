@@ -4,9 +4,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record BookLoanRenewalRequest(
         @NotNull(message = "El id del préstamo es obligatorio")
-        Long loanId,
+        UUID loanId,
 
         @NotNull(message = "Los días de extensión son obligatorios")
         @Min(value = 1, message = "La extensión de días deben ser al menos 1")

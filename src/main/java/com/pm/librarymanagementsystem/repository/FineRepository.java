@@ -10,8 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface FineRepository extends JpaRepository<Fine, Long> {
+public interface FineRepository extends JpaRepository<Fine, UUID> {
 
     @Query("""
     select f from Fine f
@@ -21,7 +22,7 @@ public interface FineRepository extends JpaRepository<Fine, Long> {
     order by f.createdAt desc
 """)
     Page<Fine> findAllWithFilters(
-            @Param("userId") Long userId,
+            @Param("userId") UUID userId,
             @Param("status")FineStatus status,
             @Param("type")FineType type,
             Pageable pageable

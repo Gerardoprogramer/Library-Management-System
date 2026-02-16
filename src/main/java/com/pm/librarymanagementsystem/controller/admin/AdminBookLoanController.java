@@ -14,6 +14,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/book-loans")
@@ -23,7 +25,7 @@ public class AdminBookLoanController {
 
     @PostMapping("/users/{userId}/checkout")
     public ResponseEntity<ApiResponse<BookLoanResponse>> checkoutForUser(
-            @PathVariable Long userId,
+            @PathVariable UUID userId,
             @Valid @RequestBody BookLoanCheckoutRequest request
     ){
 

@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface GenreRepository extends JpaRepository<Genre, Long> {
+public interface GenreRepository extends JpaRepository<Genre, UUID> {
 
     boolean existsByCode(String code);
 
@@ -15,7 +16,7 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
     List<Genre> findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc();
 
-    List<Genre> findByParentGenreIdAndActiveTrueOrderByDisplayOrderAsc(Long parentId);
+    List<Genre> findByParentGenreIdAndActiveTrueOrderByDisplayOrderAsc(UUID parentId);
 
     long countByActiveTrue();
 

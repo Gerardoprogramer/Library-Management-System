@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class WishlistServiceImpl implements WishlistService {
@@ -26,7 +28,7 @@ public class WishlistServiceImpl implements WishlistService {
     private final BookRepository bookRepository;
 
     @Override
-    public WishlistResponse addWishlist(Long bookId, String notes) {
+    public WishlistResponse addWishlist(UUID bookId, String notes) {
         User user = userService.getCurrentUserEntity();
 
         Book book =  bookRepository.findById(bookId).orElseThrow(
@@ -44,7 +46,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    public void removeFromWishlist(Long bookId) {
+    public void removeFromWishlist(UUID bookId) {
         User user = userService.getCurrentUserEntity();
 
         Wishlist wishlist = wishlistRepository.findByUserIdAndBookId(user.getId(), bookId);

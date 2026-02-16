@@ -10,16 +10,18 @@ import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatus
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 
 public interface PaymentService {
 
-    InitiatePaymentResponse initiatePayment(Long userId, InitiatePaymentRequest request);
+    InitiatePaymentResponse initiatePayment(UUID userId, InitiatePaymentRequest request);
 
-    PaymentResponse getPaymentById(Long paymentId);
+    PaymentResponse getPaymentById(UUID paymentId);
 
-    PaymentStatusResponse getPaymentStatus(Long paymentId);
+    PaymentStatusResponse getPaymentStatus(UUID paymentId);
 
-    PaymentResponse refundPayment(Long paymentId) throws BadRequestException;
+    PaymentResponse refundPayment(UUID paymentId) throws BadRequestException;
 
     PageResponse<PaymentResponse> getPaymentHistory(Pageable pageable);
 

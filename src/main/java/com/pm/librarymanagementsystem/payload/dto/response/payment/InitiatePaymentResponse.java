@@ -2,8 +2,10 @@ package com.pm.librarymanagementsystem.payload.dto.response.payment;
 
 import com.pm.librarymanagementsystem.domain.PaymentStatus;
 
+import java.util.UUID;
+
 public record InitiatePaymentResponse(
-        Long paymentId,
+        UUID paymentId,
 
         PaymentStatus paymentStatus,
 

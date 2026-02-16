@@ -2,10 +2,12 @@ package com.pm.librarymanagementsystem.payload.dto.request.bookReview;
 
 import jakarta.validation.constraints.*;
 
+import java.util.UUID;
+
 public record CreateReviewRequest(
 
         @NotNull(message = "El id del libro es obligatorio")
-        Long bookId,
+        UUID bookId,
 
         @NotNull(message = "El rating es obligatorio")
         @Min(value = 1, message = "El rating mínimo es 1")

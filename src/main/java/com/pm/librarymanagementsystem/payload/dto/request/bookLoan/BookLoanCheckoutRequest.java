@@ -5,9 +5,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record BookLoanCheckoutRequest(
         @NotNull(message = "El id del libro es obligatorio")
-        Long bookId,
+        UUID bookId,
 
         @NotNull(message = "Los días de préstamo son obligatorios")
         @Min(value = 1, message = "Los días de salida deben ser al menos 1")

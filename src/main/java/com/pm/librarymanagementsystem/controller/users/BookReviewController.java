@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/reviews")
@@ -35,7 +37,7 @@ public class BookReviewController {
 
     @PutMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<BookReviewResponse>> updateReview(
-            @PathVariable Long reviewId,
+            @PathVariable UUID reviewId,
             @Valid @RequestBody UpdateReviewRequest request
     ){
         return ResponseEntity.ok(ApiResponse.success(
@@ -46,7 +48,7 @@ public class BookReviewController {
 
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
-            @PathVariable Long reviewId
+            @PathVariable UUID reviewId
     ){
         bookReviewService.deleteReview(reviewId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -56,7 +58,7 @@ public class BookReviewController {
 
     @GetMapping("/book/{bookId}")
     public ResponseEntity<ApiResponse<PageResponse<BookReviewResponse>>> getReviewsByBook(
-            @PathVariable Long bookId,
+            @PathVariable UUID bookId,
             @PageableDefault(
                     size = 10,
                     sort = "createdAt",

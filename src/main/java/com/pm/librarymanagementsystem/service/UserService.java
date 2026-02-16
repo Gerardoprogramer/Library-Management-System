@@ -4,6 +4,7 @@ import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.response.user.UserResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService {
 
@@ -13,5 +14,5 @@ public interface UserService {
 
     User getCurrentUserEntity();
 
-    User findById(Long id);
+    User findById(UUID id);
 }

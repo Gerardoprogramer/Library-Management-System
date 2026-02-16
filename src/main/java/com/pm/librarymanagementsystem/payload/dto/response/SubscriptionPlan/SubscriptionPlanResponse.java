@@ -3,9 +3,10 @@ package com.pm.librarymanagementsystem.payload.dto.response.SubscriptionPlan;
 import com.pm.librarymanagementsystem.domain.Currency;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record SubscriptionPlanResponse(
-        Long id,
+        UUID id,
 
         String planCode,
 

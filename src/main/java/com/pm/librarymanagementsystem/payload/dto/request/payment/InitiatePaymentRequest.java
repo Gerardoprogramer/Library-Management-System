@@ -6,12 +6,13 @@ import jakarta.validation.constraints.*;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Builder
 public record InitiatePaymentRequest(
 
         @NotNull
-        Long payableId,
+        UUID payableId,
 
         @NotNull(message = "El tipo de pago es obligatorio")
         PaymentType paymentType,

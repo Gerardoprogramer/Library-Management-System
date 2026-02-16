@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
@@ -39,7 +41,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
-    public SubscriptionPlanResponse updateSubscriptionPlan(long id, UpdateSubscriptionPlanRequest request) {
+    public SubscriptionPlanResponse updateSubscriptionPlan(UUID id, UpdateSubscriptionPlanRequest request) {
 
         SubscriptionPlan plan = subscriptionPlanRepository.findById(id).orElseThrow(
                 ()-> new NotFoundException("El plan de Subscripción no existe")
@@ -53,7 +55,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
-    public void deleteSubscriptionPlan(Long id) {
+    public void deleteSubscriptionPlan(UUID id) {
         SubscriptionPlan plan = subscriptionPlanRepository.findById(id).orElseThrow(
                 ()-> new NotFoundException("El plan de Subscripción no existe")
         );

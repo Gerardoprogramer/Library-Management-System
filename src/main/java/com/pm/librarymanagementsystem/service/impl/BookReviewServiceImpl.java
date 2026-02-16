@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +62,7 @@ public class BookReviewServiceImpl implements BookReviewService {
     }
 
     @Override
-    public BookReviewResponse updateReview(Long reviewId, UpdateReviewRequest updateReviewRequest) {
+    public BookReviewResponse updateReview(UUID reviewId, UpdateReviewRequest updateReviewRequest) {
         User user = userService.getCurrentUserEntity();
 
         BookReview bookReview = bookReviewRepository.findById(reviewId).orElseThrow(
@@ -79,7 +80,7 @@ public class BookReviewServiceImpl implements BookReviewService {
     }
 
     @Override
-    public void deleteReview(Long reviewId) {
+    public void deleteReview(UUID reviewId) {
         User user = userService.getCurrentUserEntity();
 
         BookReview bookReview = bookReviewRepository.findById(reviewId).orElseThrow(
@@ -93,7 +94,7 @@ public class BookReviewServiceImpl implements BookReviewService {
     }
 
     @Override
-    public PageResponse<BookReviewResponse> getReviewsByBookId(Long bookId, Pageable pageable) {
+    public PageResponse<BookReviewResponse> getReviewsByBookId(UUID bookId, Pageable pageable) {
 
         Book book = bookRepository.findById(bookId).orElseThrow(
                 ()-> new NotFoundException("Libro no encontrado")
@@ -114,7 +115,7 @@ public class BookReviewServiceImpl implements BookReviewService {
         );
     }
 
-    private boolean hasUserReadBook(Long userId, Long bookId) {
+    private boolean hasUserReadBook(UUID userId, UUID bookId) {
         List<BookLoan> bookLoanList = bookLoanRepository.findByBookId(bookId);
 
         return bookLoanList.stream().anyMatch(loan -> loan.getUser().getId().equals(userId)

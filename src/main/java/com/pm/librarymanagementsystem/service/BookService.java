@@ -8,20 +8,21 @@ import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface BookService {
 
     BookResponse createBook(CreateBookRequest request);
 
-    BookResponse getBookById(Long id);
+    BookResponse getBookById(UUID id);
 
     List<BookResponse> createBooksBulk(List<CreateBookRequest> requests);
 
-    BookResponse updateBook(Long id, UpdateBookRequest request);
+    BookResponse updateBook(UUID id, UpdateBookRequest request);
 
-    void deleteBook(Long id);
+    void deleteBook(UUID id);
 
-    void hardDeleteBook(Long id);
+    void hardDeleteBook(UUID id);
 
     PageResponse<BookResponse> searchBooksWithFilters(
             SearchBookRequest searchBookRequest, Pageable pageable

@@ -6,9 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface BookReviewRepository extends JpaRepository<BookReview, Long> {
+import java.util.UUID;
+
+public interface BookReviewRepository extends JpaRepository<BookReview, UUID> {
 
     Page<BookReview> findByBook(Book book, Pageable pageable);
 
-    boolean existsByUserIdAndBookId(Long userId, Long bookId);
+    boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 }

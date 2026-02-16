@@ -6,11 +6,13 @@ import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface BookLoanService {
 
     BookLoanResponse checkoutBook(BookLoanCheckoutRequest request);
 
-    BookLoanResponse checkoutBookForUser(Long userId, BookLoanCheckoutRequest request);
+    BookLoanResponse checkoutBookForUser(UUID userId, BookLoanCheckoutRequest request);
 
     BookLoanResponse checkinBook(BookLoanCheckinRequest request);
 

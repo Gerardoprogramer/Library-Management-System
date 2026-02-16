@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +51,7 @@ public class BookLoanServiceImpl implements BookLoanService {
 
     @Transactional
     @Override
-    public BookLoanResponse checkoutBookForUser(Long userId, BookLoanCheckoutRequest request) {
+    public BookLoanResponse checkoutBookForUser(UUID userId, BookLoanCheckoutRequest request) {
         User user = userService.findById(userId);
 
         SubscriptionResponse subscription = subscriptionService.getUsersActiveSubscription();

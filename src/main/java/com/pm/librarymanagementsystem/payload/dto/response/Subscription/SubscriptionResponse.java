@@ -1,14 +1,15 @@
 package com.pm.librarymanagementsystem.payload.dto.response.Subscription;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record SubscriptionResponse(
 
-        Long id,
+        UUID id,
 
-        Long userId,
+        UUID userId,
 
-        Long subscriptionPlanId,
+        UUID subscriptionPlanId,
 
         String planName,
 

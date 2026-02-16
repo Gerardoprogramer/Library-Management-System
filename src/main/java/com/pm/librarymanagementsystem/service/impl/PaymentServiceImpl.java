@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Service
@@ -45,7 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final FineRepository fineRepository;
 
     @Override
-    public InitiatePaymentResponse initiatePayment(Long userId, InitiatePaymentRequest request) {
+    public InitiatePaymentResponse initiatePayment(UUID userId, InitiatePaymentRequest request) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -89,7 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse getPaymentById(Long paymentId) {
+    public PaymentResponse getPaymentById(UUID paymentId) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
@@ -98,7 +99,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentStatusResponse getPaymentStatus(Long paymentId) {
+    public PaymentStatusResponse getPaymentStatus(UUID paymentId) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
@@ -107,7 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse refundPayment(Long paymentId) throws BadRequestException {
+    public PaymentResponse refundPayment(UUID paymentId) throws BadRequestException {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new NotFoundException("Pago no encontrado"));

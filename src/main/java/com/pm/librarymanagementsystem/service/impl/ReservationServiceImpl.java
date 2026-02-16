@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +48,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ReservationResponse createReservationForUser(Long UserId, ReservationRequest request) {
+    public ReservationResponse createReservationForUser(UUID UserId, ReservationRequest request) {
         boolean alreadyHasLoan = bookLoanRepository
                 .existsByUserIdAndBookIdAndStatus(UserId, request.bookId(), BookLoanStatus.CHECKED_OUT);
         if(alreadyHasLoan){
@@ -88,7 +89,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ReservationResponse cancelReservation(Long reservationId) {
+    public ReservationResponse cancelReservation(UUID reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(
                 ()-> new NotFoundException("Reservación no encontrada"));
 
@@ -108,7 +109,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ReservationResponse fulfillReservation(Long reservationId, Integer checkoutDays) {
+    public ReservationResponse fulfillReservation(UUID reservationId, Integer checkoutDays) {
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(
                 ()-> new NotFoundException("Reservación no encontrada"));
 
@@ -131,7 +132,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public PageResponse<ReservationResponse> searchReservations(Long userId, SearchReservationRequest request, Pageable pageable) {
+    public PageResponse<ReservationResponse> searchReservations(UUID userId, SearchReservationRequest request, Pageable pageable) {
 
         Page<Reservation> reservations = reservationRepository.searchReservationsWithFilters(
                         userId,

@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/reservations")
@@ -35,7 +37,7 @@ public class ReservationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<ReservationResponse>> cancelReservation(
-            @PathVariable Long id
+            @PathVariable UUID id
     ){
         return ResponseEntity.ok(ApiResponse.success(
                 "Reservación cancelada",
@@ -45,7 +47,7 @@ public class ReservationController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> getMyReservations(
-            @RequestParam(required = false)Long bookId,
+            @RequestParam(required = false)UUID bookId,
             @RequestParam(required = false)ReservationStatus status,
             @RequestParam(required = false)Boolean activeOnly,
             @PageableDefault(

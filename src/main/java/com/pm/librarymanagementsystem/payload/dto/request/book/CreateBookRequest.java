@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record CreateBookRequest(
 
@@ -23,7 +24,7 @@ public record CreateBookRequest(
         String author,
 
         @NotNull(message = "El género es obligatorio")
-        Long genreId,
+        UUID genreId,
 
         @Size(max = 255, message = "El editor no puede superar los 255 caracteres")
         String publisher,

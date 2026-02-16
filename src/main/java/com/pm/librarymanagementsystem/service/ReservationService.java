@@ -6,17 +6,19 @@ import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.reservation.ReservationResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface ReservationService {
 
     ReservationResponse createReservation(ReservationRequest request);
 
-    ReservationResponse createReservationForUser(Long UserId, ReservationRequest request);
+    ReservationResponse createReservationForUser(UUID UserId, ReservationRequest request);
 
-    ReservationResponse cancelReservation(Long reservationId);
+    ReservationResponse cancelReservation(UUID reservationId);
 
-    ReservationResponse fulfillReservation(Long reservationId, Integer checkoutDays);
+    ReservationResponse fulfillReservation(UUID reservationId, Integer checkoutDays);
 
-    PageResponse<ReservationResponse> searchReservations(Long userId, SearchReservationRequest request, Pageable pageable);
+    PageResponse<ReservationResponse> searchReservations(UUID userId, SearchReservationRequest request, Pageable pageable);
 
     PageResponse<ReservationResponse> getMyReservations(SearchReservationRequest request, Pageable pageable);
 }

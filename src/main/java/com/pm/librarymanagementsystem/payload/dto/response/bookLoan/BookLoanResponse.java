@@ -4,14 +4,15 @@ import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.domain.BookLoanType;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record BookLoanResponse(
-        Long id,
+        UUID id,
 
-        Long bookId,
+        UUID bookId,
         String bookTitle,
 
-        Long userId,
+        UUID userId,
         String userName,
 
         BookLoanType type,

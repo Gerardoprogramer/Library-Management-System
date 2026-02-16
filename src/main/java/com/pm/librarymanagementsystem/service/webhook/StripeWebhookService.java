@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -104,7 +105,7 @@ public class StripeWebhookService {
 
         if (paymentIdStr == null) return;
 
-        Long paymentId = Long.parseLong(paymentIdStr);
+        UUID paymentId = UUID.fromString(paymentIdStr);
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow();
@@ -155,7 +156,7 @@ public class StripeWebhookService {
 
         if (paymentIdStr == null) return;
 
-        Long paymentId = Long.parseLong(paymentIdStr);
+        UUID paymentId = UUID.fromString(paymentIdStr);
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow();

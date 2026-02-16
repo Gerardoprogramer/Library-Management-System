@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +46,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public GenreResponse updateGenre(Long id, UpdateGenreRequest request) {
+    public GenreResponse updateGenre(UUID id, UpdateGenreRequest request) {
 
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() ->
@@ -71,7 +72,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public GenreResponse getGenreById(Long id) {
+    public GenreResponse getGenreById(UUID id) {
 
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Género no encontrado"));
@@ -80,7 +81,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public void deleteGenre(Long id) {
+    public void deleteGenre(UUID id) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 
@@ -89,7 +90,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public void hardDeleteGenre(Long id) {
+    public void hardDeleteGenre(UUID id) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Género no encontrado"));
 
@@ -124,7 +125,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public long getBookCountByGenreId(Long id) {
+    public long getBookCountByGenreId(UUID id) {
         return 0L;
     }
 }

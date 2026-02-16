@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record UpdateBookRequest(
 
@@ -16,7 +17,7 @@ public record UpdateBookRequest(
         @Size(max = 255, message = "El autor no puede superar los 255 caracteres")
         String author,
 
-        Long genreId,
+        UUID genreId,
 
         @Size(max = 255, message = "El editor no puede superar los 255 caracteres")
         String publisher,

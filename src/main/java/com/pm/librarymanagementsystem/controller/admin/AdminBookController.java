@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class AdminBookController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UpdateBookRequest request) {
 
         BookResponse book = bookService.updateBook(id, request);
@@ -57,7 +58,7 @@ public class AdminBookController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable UUID id) {
         bookService.deleteBook(id);
 
         return ResponseEntity.ok(
@@ -66,7 +67,7 @@ public class AdminBookController {
     }
 
     @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ApiResponse<Void>> hardDeleteBook(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> hardDeleteBook(@PathVariable UUID id) {
         bookService.hardDeleteBook(id);
 
         return ResponseEntity.ok(

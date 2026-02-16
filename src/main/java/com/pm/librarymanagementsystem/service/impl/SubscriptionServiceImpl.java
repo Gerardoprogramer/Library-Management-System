@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +59,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse cancelSubscription(Long id, CancelSubscriptionRequest request) {
+    public SubscriptionResponse cancelSubscription(UUID id, CancelSubscriptionRequest request) {
         Subscription subscription = subscriptionRepository
                 .findById(id)
                 .orElseThrow(()-> new NotFoundException("La suscripción no existe"));
@@ -69,7 +70,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse activateSubscription(Long subscriptionId, Long paymentId) {
+    public SubscriptionResponse activateSubscription(UUID subscriptionId, UUID paymentId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(()-> new NotFoundException("La suscripción no existe"));
 

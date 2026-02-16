@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/wishlist")
@@ -21,7 +23,7 @@ public class WishlistController {
 
     @PostMapping("/{bookId}")
     public ResponseEntity<ApiResponse<WishlistResponse>> addWishlist(
-            @PathVariable Long bookId,
+            @PathVariable UUID bookId,
             @RequestParam(required = false) String notes
     ){
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -33,7 +35,7 @@ public class WishlistController {
 
     @DeleteMapping("/{bookId}")
     public ResponseEntity<ApiResponse<Void>> removeFromWishlist(
-            @PathVariable Long bookId
+            @PathVariable UUID bookId
     ){
         wishlistService.removeFromWishlist(bookId);
         return ResponseEntity.ok(ApiResponse.success(

@@ -8,13 +8,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record FineRequest(
         @NotNull(message = "El usuario es obligatorio")
-        Long userId,
+        UUID userId,
 
         @NotNull(message = "El préstamo es obligatorio")
-        Long bookLoanId,
+        UUID bookLoanId,
 
         @NotNull(message = "El tipo de multa es obligatorio")
         FineType type,

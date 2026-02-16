@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record UpdateGenreRequest(
 
         @NotBlank(message = "El código de género es obligatorio")
@@ -20,5 +22,5 @@ public record UpdateGenreRequest(
 
         Boolean active,
 
-        Long parentGenreId
+        UUID parentGenreId
 ) {}

@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/subscriptions")
@@ -39,7 +41,7 @@ public class SubscriptionController {
 
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> cancelSubscription(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody CancelSubscriptionRequest request){
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -50,8 +52,8 @@ public class SubscriptionController {
 
     @PatchMapping("/activate")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> activateSubscription(
-            @RequestParam Long subscriptionId,
-            @RequestParam Long paymentId){
+            @RequestParam UUID subscriptionId,
+            @RequestParam UUID paymentId){
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Se activó correctamente",
