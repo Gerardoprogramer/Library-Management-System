@@ -36,7 +36,7 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofMinutes(15))
@@ -44,7 +44,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofDays(7))
@@ -68,7 +68,7 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofMinutes(15))
@@ -76,7 +76,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofDays(7))
@@ -102,14 +102,14 @@ public class AuthController {
 
         ResponseCookie clearAccess = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
                 .build();
 
         ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -130,7 +130,7 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtResponse.accessToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofMinutes(15))
