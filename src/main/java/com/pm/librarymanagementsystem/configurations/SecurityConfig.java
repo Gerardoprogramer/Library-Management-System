@@ -54,9 +54,10 @@ public class SecurityConfig {
 
         configuration.setAllowCredentials(true);
 
-        configuration.setAllowedOrigins(List.of(
+        configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "https://*.ngrok-free.dev",
                 "https://obsidianlibrary.netlify.app"
         ));
 
