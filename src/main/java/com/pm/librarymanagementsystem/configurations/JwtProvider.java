@@ -3,60 +3,85 @@ package com.pm.librarymanagementsystem.configurations;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@Getter
 @Service
 public class JwtProvider {
+
     private final SecretKey key;
 
     public JwtProvider(@Value("${jwt.secret}") String secretKey) {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(Authentication authentication){
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+    // ACCESS TOKEN (15 min)
+    public String generateAccessToken(Authentication authentication) {
 
-        String roles = populateAuthorities(authorities);
+        String authorities = authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
 
-        return Jwts.builder().issuedAt(new Date())
-                .expiration(new Date(new Date().getTime() + 86400000))
-                .claim("email", authentication.getName())
-                .claim("authorities", roles)
+        return Jwts.builder()
+                .subject(authentication.getName())
+                .claim("authorities", authorities)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
                 .signWith(key)
                 .compact();
     }
 
-    public String getEmailFromJwtToken(String jwt){
-        jwt = jwt.substring(7);
-        Claims claims = Jwts.parser()
+    // REFRESH TOKEN (7 días)
+    public String generateRefreshToken(String email) {
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
+                .signWith(key)
+                .compact();
+    }
+
+    // Extraer email (subject)
+    public String extractEmail(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    // Extraer authorities
+    public List<GrantedAuthority> extractAuthorities(String token) {
+        String authorities = parseClaims(token).get("authorities", String.class);
+
+        if (authorities == null || authorities.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+    }
+
+    // Validar token
+    public boolean isTokenValid(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(key)
                 .build()
-                .parseSignedClaims(jwt)
+                .parseSignedClaims(token)
                 .getPayload();
-
-        return claims.get("email", String.class);
     }
-
-    private String populateAuthorities(Collection<? extends GrantedAuthority> authorities) {
-        Set<String> auths = new HashSet<>();
-
-        for(GrantedAuthority authority: authorities){
-            auths.add(authority.getAuthority());
-        }
-        return String.join(",",auths);
-    }
-
 }

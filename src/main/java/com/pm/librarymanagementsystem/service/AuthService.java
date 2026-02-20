@@ -1,19 +1,21 @@
 package com.pm.librarymanagementsystem.service;
 
-import com.pm.librarymanagementsystem.payload.dto.response.auth.AuthResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.auth.LoginRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.jwt.JwtResponse;
 
 public interface AuthService {
 
-    AuthResponse login(LoginRequest loginRequest);
+    JwtResponse login(LoginRequest loginRequest);
 
-    AuthResponse signup(RegisterRequest request);
+    JwtResponse signup(RegisterRequest request);
 
-    AuthResponse logout();
+    void logout(String refreshToken);
 
     void createPasswordResetToken(String email);
 
     void resetPassword(String token, String newPassword);
+
+    JwtResponse refresh(String refreshTokenRequest);
 
 }

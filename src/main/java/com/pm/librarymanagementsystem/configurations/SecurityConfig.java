@@ -1,7 +1,6 @@
 package com.pm.librarymanagementsystem.configurations;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,65 +9,77 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final JwtValidator jwtValidator;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         return http
-                .sessionManagement(management->management.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS
-                ))
-                .authorizeHttpRequests(authorize ->authorize
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/payments/webhook").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/**").authenticated()
-                        .anyRequest().permitAll())
-                .addFilterBefore(new JwtValidator(jwtSecret), BasicAuthenticationFilter.class)
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                        .anyRequest().permitAll()
+                )
+
+                .addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class)
+
                 .build();
     }
 
-    private CorsConfigurationSource corsConfigurationSource() {
-        return new CorsConfigurationSource() {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
 
-            @Override
-            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-                CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowCredentials(true);
-                configuration.setAllowedOrigins(Arrays.asList(
-                        "http://localhost:5173",
-                        "https://obsidianlibrary.netlify.app"
-                ));
-                configuration.setAllowedMethods(Arrays.asList(
-                        "GET","POST","PUT","DELETE","PATCH","OPTIONS"
-                ));
-                configuration.setAllowedHeaders(Arrays.asList(
-                        "Authorization","Content-Type"
-                ));
-                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-                configuration.setMaxAge(360L);
+        configuration.setAllowCredentials(true);
 
-                return configuration;
-            }
-        };
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://obsidianlibrary.netlify.app"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of(
+                "Content-Type"
+        ));
+
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

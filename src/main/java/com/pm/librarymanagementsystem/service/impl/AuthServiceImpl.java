@@ -6,14 +6,17 @@ import com.pm.librarymanagementsystem.exception.InvalidTokenException;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.UserMapper;
 import com.pm.librarymanagementsystem.modal.PasswordResetToken;
+import com.pm.librarymanagementsystem.modal.RefreshToken;
 import com.pm.librarymanagementsystem.modal.User;
-import com.pm.librarymanagementsystem.payload.dto.response.auth.AuthResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.auth.LoginRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.jwt.JwtResponse;
 import com.pm.librarymanagementsystem.repository.PasswordResetTokenRepository;
+import com.pm.librarymanagementsystem.repository.RefreshTokenRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.AuthService;
 import com.pm.librarymanagementsystem.service.EmailService;
+import com.pm.librarymanagementsystem.service.RefreshTokenService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,27 +41,30 @@ public class AuthServiceImpl implements AuthService {
     private final CustomUserServiceImpl customUserServiceImpl;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${app.frontend.reset-password-url}")
     private String frontendUrl;
 
     @Override
-    public AuthResponse login(LoginRequest request) {
+    @Transactional
+    public JwtResponse login(LoginRequest request) {
         Authentication authentication = authenticate(request.email(), request.password());
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtProvider.generateToken(authentication);
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
 
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
-        return new AuthResponse(
-                token,
-                "Inicio de sesión exitoso",
-                "Bienvenid@ " + user.getFullName(),
+        return new JwtResponse(
+                accessToken,
+                refreshToken.getToken(),
                 UserMapper.toResponse(user)
         );
     }
@@ -74,42 +80,43 @@ public class AuthServiceImpl implements AuthService {
         return new UsernamePasswordAuthenticationToken(email, null, userDetails.getAuthorities());
     }
 
-    @Transactional
     @Override
-    public AuthResponse signup(RegisterRequest request) {
+    @Transactional
+    public JwtResponse signup(RegisterRequest request) {
 
         userRepository.findByEmail(request.email())
                 .ifPresent(usr -> {
-            throw new ConflictException("El correo ya está registrado");
-        });
+                    throw new ConflictException("El correo ya está registrado");
+                });
 
         User user = UserMapper.toRegister(request, passwordEncoder.encode(request.password()));
-
         user = userRepository.save(user);
 
+        UserDetails userDetails = customUserServiceImpl.loadUserByUsername(user.getEmail());
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getEmail(), user.getPassword());
+                userDetails.getUsername(),
+                null,
+                userDetails.getAuthorities()
+        );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = jwtProvider.generateToken(authentication);
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return new AuthResponse(
-                jwt,
-                "registro exitoso",
-                "Bienvenid@ " + user.getFullName(),
+        return new JwtResponse(
+                accessToken,
+                refreshToken.getToken(),
                 UserMapper.toResponse(user)
         );
     }
 
+
     @Override
-    public AuthResponse logout() {
-        return new AuthResponse(
-                null,
-                "Sesión cerrada",
-                "Logout exitoso",
-                null
-        );
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.deleteByToken(refreshToken);
     }
 
     @Transactional
@@ -151,4 +158,34 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
     }
+
+    @Override
+    @Transactional
+    public JwtResponse refresh(String refreshTokenRequest) {
+
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenRequest)
+                .orElseThrow(() -> new RuntimeException("Refresh token no encontrado"));
+
+        refreshTokenService.verifyExpiration(refreshToken);
+
+        String email = jwtProvider.extractEmail(refreshToken.getToken());
+
+        UserDetails userDetails = customUserServiceImpl.loadUserByUsername(email);
+
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails.getUsername(),
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+        String newAccessToken = jwtProvider.generateAccessToken(authentication);
+
+        return new JwtResponse(
+                newAccessToken,
+                refreshToken.getToken(),
+                UserMapper.toResponse(refreshToken.getUser())
+        );
+    }
+
 }

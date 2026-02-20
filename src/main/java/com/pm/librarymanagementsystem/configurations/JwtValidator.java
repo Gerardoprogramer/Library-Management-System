@@ -1,74 +1,64 @@
 package com.pm.librarymanagementsystem.configurations;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Component
 public class JwtValidator extends OncePerRequestFilter {
 
-    private final String secretKey;
+    private final JwtProvider jwtProvider;
 
-    public JwtValidator(String secretKey) {
-        this.secretKey = secretKey;
+    public JwtValidator(JwtProvider jwtProvider) {
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-        String header = request.getHeader(JwtConstant.JWT_HEADER);
+        String token = extractToken(request);
 
-        if(header != null && header.startsWith("Bearer ")
-                && SecurityContextHolder.getContext().getAuthentication() == null){
-            header = header.substring(7);
+        if (token != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null &&
+                jwtProvider.isTokenValid(token)) {
 
-            try {
-                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-                Claims claims = Jwts.parser().verifyWith(key).build()
-                        .parseSignedClaims(header).getPayload();
+            String email = jwtProvider.extractEmail(token);
+            List<GrantedAuthority> authorities = jwtProvider.extractAuthorities(token);
 
-                String email = claims.get("email", String.class);
+            Authentication authentication =
+                    new UsernamePasswordAuthenticationToken(email, null, authorities);
 
-                String authorities = claims.get("authorities", String.class);
-
-                if (authorities == null || authorities.isBlank()) {
-                    throw new JwtException("Authorities inválidas");
-                }
-
-
-                List<GrantedAuthority> authorityList = AuthorityUtils
-                        .commaSeparatedStringToAuthorityList(authorities);
-
-                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        email, null, authorityList);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            } catch (Exception e) {
-                SecurityContextHolder.clearContext();
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\":\"Token inválido o expirado\"}");
-                return;
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+
         filterChain.doFilter(request, response);
     }
+
+    private String extractToken(HttpServletRequest request) {
+
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
+    }
+
 }
