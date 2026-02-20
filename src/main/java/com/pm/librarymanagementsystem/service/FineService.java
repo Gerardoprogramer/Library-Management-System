@@ -18,8 +18,6 @@ public interface FineService {
 
     InitiatePaymentResponse payFine(UUID fineId, String transactionId);
 
-    void markFineAsPaid(UUID fineId, BigDecimal amount, String transactionId);
-
     FineResponse waiveFine(WaiveFineRequest request);
 
     PageResponse<FineResponse> getMyFines(FineStatus status, FineType type, Pageable pageable);

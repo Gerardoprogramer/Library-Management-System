@@ -29,7 +29,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -235,20 +234,11 @@ public class BookLoanServiceImpl implements BookLoanService {
                 bookLoan.setStatus(BookLoanStatus.OVERDUE);
                 bookLoan.setOverdue(true);
 
-                int overdueDays = calculateOverdueDate(bookLoan.getDueDate(), LocalDateTime.now());
-
                 bookLoanRepository.save(bookLoan);
                 updateCount++;
             }
         }
 
         return updateCount;
-    }
-
-    public int calculateOverdueDate(LocalDateTime dueDate, LocalDateTime today){
-        if(today.isBefore(dueDate) || today.isEqual(dueDate)){
-            return 0;
-        }
-        return (int) ChronoUnit.DAYS.between(dueDate, today);
     }
 }

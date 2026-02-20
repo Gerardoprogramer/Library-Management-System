@@ -6,7 +6,6 @@ import com.pm.librarymanagementsystem.domain.PaymentStatus;
 import com.pm.librarymanagementsystem.domain.PaymentType;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.PaymentMapper;
-import com.pm.librarymanagementsystem.mapper.UserMapper;
 import com.pm.librarymanagementsystem.modal.Payable;
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.Subscription;

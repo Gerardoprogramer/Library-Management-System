@@ -5,9 +5,6 @@ import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
-import com.pm.librarymanagementsystem.payload.dto.request.Subscription.UpdateSubscriptionRequest;
-
-import static com.pm.librarymanagementsystem.util.MapperUtils.setIfNotNull;
 
 public class SubscriptionMapper {
 
@@ -15,7 +12,7 @@ public class SubscriptionMapper {
     }
 
     /* =======================
-       DTO → ENTITY (CREATE)
+       DTO → ENTITY
        ======================= */
 
     public static Subscription toEntity(
@@ -33,21 +30,6 @@ public class SubscriptionMapper {
         subscription.setNotes(request.notes());
 
         return subscription;
-    }
-
-    /* =======================
-       DTO → ENTITY (UPDATE)
-       ======================= */
-
-    public static void updateEntity(
-            Subscription subscription,
-            UpdateSubscriptionRequest request
-    ) {
-        setIfNotNull(request.active(), subscription::setActive);
-        setIfNotNull(request.autoRenew(), subscription::setAutoRenew);
-        setIfNotNull(request.maxBooksAllowed(), subscription::setMaxBooksAllowed);
-        setIfNotNull(request.maxDaysPerBook(), subscription::setMaxDaysPerBook);
-        setIfNotNull(request.notes(), subscription::setNotes);
     }
 
     /* =======================

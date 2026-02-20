@@ -10,7 +10,7 @@ public interface UserService {
 
     UserResponse getCurrentUser();
 
-    public List<UserResponse>  getAllUsers();
+    List<UserResponse>  getAllUsers();
 
     User getCurrentUserEntity();
 

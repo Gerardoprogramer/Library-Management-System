@@ -98,14 +98,6 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public List<GenreResponse> getAllActiveGenresWithSubGenres() {
-        return genreRepository.findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc()
-                .stream()
-                .map(GenreMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<GenreResponse> getTopLevelGenres() {
 
         return genreRepository.findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc()
@@ -115,18 +107,13 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public Page<GenreResponse> searchGenres(String searchTerm, Pageable pageable) {
-        return null;
-    }
-
-    @Override
     public long getTotalActiveGenres() {
         return genreRepository.countByActiveTrue();
     }
 
     @Override
     public long getBookCountByGenreId(UUID id) {
-        return 0L;
+        return genreRepository.countBooksByGenre(id);
     }
 }
 

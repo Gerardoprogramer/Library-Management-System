@@ -18,7 +18,7 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 
     @Query(
             "select b from Book b where" +
-                    "(:searchTerm is null OR " +
+                    "(coalesce(:searchTerm, '') = '' OR " +
                     "lower(b.title) like lower(concat('%', :searchTerm, '%')) OR " +
                     "lower(b.author) like lower(concat('%', :searchTerm, '%')) OR " +
                     "lower(b.isbn) like lower(concat('%', :searchTerm, '%'))) AND " +

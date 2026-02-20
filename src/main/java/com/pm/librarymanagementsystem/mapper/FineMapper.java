@@ -1,7 +1,6 @@
 package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.modal.Fine;
-import com.pm.librarymanagementsystem.payload.dto.request.fine.FineRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.fine.FineResponse;
 
 public class FineMapper {

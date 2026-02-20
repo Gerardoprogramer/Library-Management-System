@@ -12,18 +12,10 @@ public interface GenreRepository extends JpaRepository<Genre, UUID> {
 
     boolean existsByCode(String code);
 
-    List<Genre> findByActiveTrueOrderByDisplayOrderAsc();
-
     List<Genre> findByParentGenreIsNullAndActiveTrueOrderByDisplayOrderAsc();
-
-    List<Genre> findByParentGenreIdAndActiveTrueOrderByDisplayOrderAsc(UUID parentId);
 
     long countByActiveTrue();
 
-/*    @Query("select count(b) from book b where b.genre.id=:id")
-    long countBooksByGenre(@Param("id") Long id);*/
-
-
-
-
+    @Query("select count(b) from Book b where b.genre.id=:id")
+    long countBooksByGenre(@Param("id") UUID id);
 }

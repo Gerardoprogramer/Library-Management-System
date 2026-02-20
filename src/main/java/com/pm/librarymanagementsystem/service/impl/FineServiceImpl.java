@@ -87,20 +87,6 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    public void markFineAsPaid(UUID fineId, BigDecimal amount, String transactionId) {
-
-        Fine fine = fineRepository.findById(fineId).orElseThrow(
-                ()-> new NotFoundException("Multa no encontrada"));
-
-        fine.applyPayment(amount);
-        fine.setTransactionId(transactionId);
-        fine.setStatus(FineStatus.PAID);
-        fine.setUpdatedAt(LocalDateTime.now());
-
-        fineRepository.save(fine);
-    }
-
-    @Override
     public FineResponse waiveFine(WaiveFineRequest request) {
         Fine fine = fineRepository.findById(request.fineId())
                 .orElseThrow( ()-> new NotFoundException("Multa no encontrada"));

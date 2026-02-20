@@ -121,14 +121,6 @@ public class BookServiceImpl implements BookService {
         return bookRepository.countAvailableBooks();
     }
 
-    @Override
-    public BookResponse getBookByISBN(String isbn) {
-        Book book = bookRepository.findByIsbn(isbn)
-                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
-
-        return BookMapper.toResponse(book);
-    }
-
     public PageResponse<BookResponse> toPageResponse(Page<Book> books) {
         List<BookResponse> bookDtos = books.getContent()
                 .stream()

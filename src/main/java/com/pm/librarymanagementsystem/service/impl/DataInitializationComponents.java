@@ -40,7 +40,7 @@ public class DataInitializationComponents implements CommandLineRunner {
                     .authProvider(AuthProvider.LOCAL)
                     .build();
 
-            User admin = userRepository.save(user);
+            userRepository.save(user);
         }
     }
 }

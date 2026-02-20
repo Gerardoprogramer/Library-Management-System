@@ -1,7 +1,6 @@
 package com.pm.librarymanagementsystem.repository;
 
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
-import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.BookLoan;
 import com.pm.librarymanagementsystem.modal.User;
 import org.springframework.data.domain.Page;

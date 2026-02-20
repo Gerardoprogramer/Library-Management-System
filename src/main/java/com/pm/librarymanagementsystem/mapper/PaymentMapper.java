@@ -2,7 +2,6 @@ package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
-import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentHistoryItemResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatusResponse;
 
@@ -56,19 +55,6 @@ public class PaymentMapper {
 
                 payment.getCreatedAt(),
                 payment.getUpdatedAt()
-        );
-    }
-
-    public static PaymentHistoryItemResponse toHistoryItem(Payment payment) {
-        if (payment == null) return null;
-
-        return new PaymentHistoryItemResponse(
-                payment.getId(),
-                payment.getPaymentType(),
-                payment.getPaymentStatus(),
-                payment.getAmount(),
-                payment.getCurrency(),
-                payment.getCreatedAt()
         );
     }
 
