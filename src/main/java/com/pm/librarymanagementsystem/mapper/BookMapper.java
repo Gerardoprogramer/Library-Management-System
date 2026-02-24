@@ -5,6 +5,7 @@ import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest
 import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse;
 
 import static com.pm.librarymanagementsystem.util.MapperUtils.setIfNotNull;
 
@@ -78,6 +79,23 @@ public class BookMapper {
                 book.getActive(),
                 book.getCreatedAt(),
                 book.getUpdatedAt()
+        );
+    }
+
+    public static BookSummaryResponse SummaryResponse(Book book, Boolean isWishList,
+                                                      Double averageRating,Long totalReviews){
+        return new BookSummaryResponse(
+            book.getId(),
+                book.getTitle(),
+                book.getAuthor(),
+                book.getGenre().getName(),
+                book.getPages(),
+                book.getAvailableCopies(),
+                book.getCoverImageUrl(),
+                isWishList,
+                averageRating,
+                totalReviews
+
         );
     }
 

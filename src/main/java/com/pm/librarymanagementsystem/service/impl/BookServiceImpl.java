@@ -5,14 +5,18 @@ import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
+import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.book.SearchBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse;
 import com.pm.librarymanagementsystem.repository.BookRepository;
 import com.pm.librarymanagementsystem.repository.GenreRepository;
 import com.pm.librarymanagementsystem.service.BookService;
+import com.pm.librarymanagementsystem.service.UserService;
+import com.pm.librarymanagementsystem.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +33,8 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
+    private final WishlistService wishlistService;
+    private final UserService userService;
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
@@ -99,17 +105,28 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public PageResponse<BookResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest, Pageable pageable) {
+    public PageResponse<BookSummaryResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest, Pageable pageable) {
 
-        Page<Book> bookPage =  bookRepository.searchBookswithFilters(
+        User user = userService.getCurrentUserEntity();
+
+        Page<BookSummaryResponse> bookPage =  bookRepository.searchBooksWithSummary(
                 searchBookRequest.searchTerm(),
                 searchBookRequest.genreId(),
                 searchBookRequest.availableOnly(),
+                user.getId(),
                 pageable
 
         );
-        return toPageResponse(bookPage);
+        return new PageResponse<>(bookPage.getContent(),
+                bookPage.getNumber(),
+                bookPage.getSize(),
+                bookPage.getTotalElements(),
+                bookPage.getTotalPages(),
+                bookPage.isLast(),
+                bookPage.isFirst(),
+                bookPage.isEmpty());
     }
+
 
     @Override
     public long getTotalActiveBooks() {
@@ -121,18 +138,4 @@ public class BookServiceImpl implements BookService {
         return bookRepository.countAvailableBooks();
     }
 
-    public PageResponse<BookResponse> toPageResponse(Page<Book> books) {
-        List<BookResponse> bookDtos = books.getContent()
-                .stream()
-                .map(BookMapper::toResponse)
-                .collect(Collectors.toList());
-        return new PageResponse<>(bookDtos,
-                books.getNumber(),
-                books.getSize(),
-                books.getTotalElements(),
-                books.getTotalPages(),
-                books.isLast(),
-                books.isFirst(),
-                books.isEmpty());
-    }
 }
