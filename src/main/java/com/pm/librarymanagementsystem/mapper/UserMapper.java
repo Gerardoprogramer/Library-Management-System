@@ -36,7 +36,7 @@ public class UserMapper {
                 user.getEmail(),
                 user.getPhone(),
                 user.getFullName(),
-                user.getRole(),
+                user.getRole() == UserRole.ROLE_ADMIN,
                 user.getLastLogin()
         );
     }

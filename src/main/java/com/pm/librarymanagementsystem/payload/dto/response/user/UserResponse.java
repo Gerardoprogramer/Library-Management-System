@@ -10,7 +10,7 @@ public record UserResponse (
         String email,
         String phone,
         String fullName,
-        UserRole role,
+        Boolean isAdmin,
         LocalDateTime lastLogin
 ){
 }
