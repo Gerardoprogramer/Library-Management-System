@@ -20,6 +20,7 @@ import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -63,12 +64,11 @@ public class BookReviewServiceImpl implements BookReviewService {
 
     @Override
     public BookReviewResponse updateReview(UUID reviewId, UpdateReviewRequest updateReviewRequest) {
-        User user = userService.getCurrentUserEntity();
 
         BookReview bookReview = bookReviewRepository.findById(reviewId).orElseThrow(
                 ()-> new NotFoundException("Reseña no encontrada"));
 
-        if(!bookReview.getUser().getId().equals(user.getId())){
+        if(!bookReview.getUser().getId().equals(getCurrentUserId())){
             throw new BusinessRuleException("No has reseñado este libro");
         }
 
@@ -81,12 +81,11 @@ public class BookReviewServiceImpl implements BookReviewService {
 
     @Override
     public void deleteReview(UUID reviewId) {
-        User user = userService.getCurrentUserEntity();
 
         BookReview bookReview = bookReviewRepository.findById(reviewId).orElseThrow(
                 ()-> new NotFoundException("Reseña no encontrada"));
 
-        if(!bookReview.getUser().getId().equals(user.getId())){
+        if(!bookReview.getUser().getId().equals(getCurrentUserId())){
             throw new BusinessRuleException("Solo puedes eliminar tus propias reseñas");
         }
 
@@ -96,22 +95,18 @@ public class BookReviewServiceImpl implements BookReviewService {
     @Override
     public PageResponse<BookReviewResponse> getReviewsByBookId(UUID bookId, Pageable pageable) {
 
-        Book book = bookRepository.findById(bookId).orElseThrow(
-                ()-> new NotFoundException("Libro no encontrado")
-        );
-
-        Page<BookReview> bookReviewPage = bookReviewRepository.findByBook(book, pageable);
-        Page<BookReviewResponse> mappedPage = bookReviewPage.map(BookReviewMapper::toResponse);
+        Page<BookReviewResponse> page =
+                bookReviewRepository.findReviewsByBookId(bookId, pageable);
 
         return new PageResponse<>(
-                mappedPage.getContent(),
-                mappedPage.getNumber(),
-                mappedPage.getSize(),
-                mappedPage.getTotalElements(),
-                mappedPage.getTotalPages(),
-                mappedPage.isLast(),
-                mappedPage.isFirst(),
-                mappedPage.isEmpty()
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast(),
+                page.isFirst(),
+                page.isEmpty()
         );
     }
 
@@ -120,5 +115,12 @@ public class BookReviewServiceImpl implements BookReviewService {
 
         return bookLoanList.stream().anyMatch(loan -> loan.getUser().getId().equals(userId)
         && loan.getStatus() == BookLoanStatus.RETURNED);
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

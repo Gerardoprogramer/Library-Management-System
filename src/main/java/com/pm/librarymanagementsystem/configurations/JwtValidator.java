@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtValidator extends OncePerRequestFilter {
@@ -36,11 +37,11 @@ public class JwtValidator extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().getAuthentication() == null &&
                 jwtProvider.isTokenValid(token)) {
 
-            String email = jwtProvider.extractEmail(token);
+            UUID userId = UUID.fromString(jwtProvider.extractUserId(token));
             List<GrantedAuthority> authorities = jwtProvider.extractAuthorities(token);
 
             Authentication authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
@@ -49,6 +50,12 @@ public class JwtValidator extends OncePerRequestFilter {
     }
 
     private String extractToken(HttpServletRequest request) {
+
+        String header = request.getHeader("Authorization");
+
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
 
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
@@ -60,5 +67,6 @@ public class JwtValidator extends OncePerRequestFilter {
 
         return null;
     }
+
 
 }

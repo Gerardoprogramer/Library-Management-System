@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service;
 
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookDetailsResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
@@ -15,7 +16,7 @@ public interface BookService {
 
     BookResponse createBook(CreateBookRequest request);
 
-    BookResponse getBookById(UUID id);
+    BookDetailsResponse getBookById(UUID id);
 
     List<BookResponse> createBooksBulk(List<CreateBookRequest> requests);
 

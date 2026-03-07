@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -138,9 +139,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PageResponse<PaymentResponse> getPaymentHistory(Pageable pageable) {
-        User user  = userService.getCurrentUserEntity();
 
-        Page<Payment> payment = paymentRepository.findByUserId(user.getId(), pageable);
+        Page<Payment> payment = paymentRepository.findByUserId(getCurrentUserId(), pageable);
         Page<PaymentResponse> mappedPage = payment.map(PaymentMapper::toResponse);
 
         return new PageResponse<>(
@@ -173,5 +173,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         return paymentRepository.save(payment);
     }
-
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+    }
 }

@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -50,12 +49,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public JwtResponse login(LoginRequest request) {
-        Authentication authentication = authenticate(request.email(), request.password());
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
 
-        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String accessToken = jwtProvider.generateAccessToken(user);
 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
@@ -67,17 +65,6 @@ public class AuthServiceImpl implements AuthService {
                 refreshToken.getToken(),
                 UserMapper.toResponse(user)
         );
-    }
-
-    private Authentication authenticate(String email, String password) {
-        UserDetails userDetails = customUserServiceImpl.loadUserByUsername(email);
-
-        if (userDetails == null ||
-                !passwordEncoder.matches(password, userDetails.getPassword())) {
-
-            throw new BadCredentialsException("Credenciales inválidas");
-        }
-        return new UsernamePasswordAuthenticationToken(email, null, userDetails.getAuthorities());
     }
 
     @Override
@@ -102,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String accessToken = jwtProvider.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return new JwtResponse(
@@ -168,18 +155,8 @@ public class AuthServiceImpl implements AuthService {
 
         refreshTokenService.verifyExpiration(refreshToken);
 
-        String email = jwtProvider.extractEmail(refreshToken.getToken());
-
-        UserDetails userDetails = customUserServiceImpl.loadUserByUsername(email);
-
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails.getUsername(),
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-        String newAccessToken = jwtProvider.generateAccessToken(authentication);
+        User user = refreshToken.getUser();
+        String newAccessToken = jwtProvider.generateAccessToken(user);
 
         return new JwtResponse(
                 newAccessToken,
@@ -187,5 +164,4 @@ public class AuthServiceImpl implements AuthService {
                 UserMapper.toResponse(refreshToken.getUser())
         );
     }
-
 }

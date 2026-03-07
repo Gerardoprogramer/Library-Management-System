@@ -17,6 +17,7 @@ import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -50,9 +51,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public SubscriptionResponse getUsersActiveSubscription() {
 
-        User user = userService.getCurrentUserEntity();
         Subscription subscription = subscriptionRepository
-                .findActiveSubscriptionByUserId(user.getId(), LocalDateTime.now())
+                .findActiveSubscriptionByUserId(getCurrentUserId(), LocalDateTime.now())
                 .orElseThrow(()-> new NotFoundException("No hay una suscripción activa"));
 
         return SubscriptionMapper.toResponse(subscription);
@@ -106,5 +106,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             subscription.setActive(false);
             subscriptionRepository.save(subscription);
         }
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

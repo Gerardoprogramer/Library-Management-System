@@ -3,6 +3,7 @@ package com.pm.librarymanagementsystem.mapper;
 import com.pm.librarymanagementsystem.modal.BookLoan;
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -13,12 +14,14 @@ public class BookLoanMapper {
     /* =======================
        ENTITY → DTO
        ======================= */
-    public static BookLoanResponse toResponse(BookLoan entity) {
+    public static BookLoanResponse toResponse(BookLoan entity, BigDecimal fineAmount) {
 
         return new BookLoanResponse(
                 entity.getId(),
                 entity.getBook().getId(),
                 entity.getBook().getTitle(),
+                entity.getBook().getAuthor(),
+                entity.getBook().getCoverImageUrl(),
                 entity.getUser().getId(),
                 entity.getUser().getFullName(),
                 entity.getType(),
@@ -32,8 +35,7 @@ public class BookLoanMapper {
                 entity.getNotes(),
                 entity.isOverdue(),
                 entity.getOverdueDays(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                fineAmount
         );
     }
 }

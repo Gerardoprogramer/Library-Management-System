@@ -1,6 +1,5 @@
 package com.pm.librarymanagementsystem.payload.dto.response.book;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 public record BookSummaryResponse(

@@ -23,6 +23,7 @@ import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -70,8 +71,6 @@ public class FineServiceImpl implements FineService {
             throw new BusinessRuleException("Multa eximida");
         }
 
-        User user = userService.getCurrentUserEntity();
-
         InitiatePaymentRequest request = InitiatePaymentRequest
                 .builder()
                 .payableId(fine.getId())
@@ -83,7 +82,7 @@ public class FineServiceImpl implements FineService {
                 .cancelUrl("http://localhost:5173/cancel")
                 .build();
 
-        return paymentService.initiatePayment(user.getId(), request);
+        return paymentService.initiatePayment(getCurrentUserId(), request);
     }
 
     @Override
@@ -108,10 +107,9 @@ public class FineServiceImpl implements FineService {
 
     @Override
     public PageResponse<FineResponse> getMyFines(FineStatus status, FineType type, Pageable pageable) {
-        User user = userService.getCurrentUserEntity();
 
         Page<Fine> fines = fineRepository
-                .findAllWithFilters(user.getId(), status, type, pageable);
+                .findAllWithFilters(getCurrentUserId(), status, type, pageable);
         Page<FineResponse> mappedPage = fines.map(FineMapper::toResponse);
 
         return new PageResponse<>(
@@ -144,5 +142,12 @@ public class FineServiceImpl implements FineService {
                 mappedPage.isFirst(),
                 mappedPage.isEmpty()
         );
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

@@ -7,6 +7,7 @@ import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookLoanMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.BookLoan;
+import com.pm.librarymanagementsystem.modal.Fine;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckinRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckoutRequest;
@@ -17,6 +18,7 @@ import com.pm.librarymanagementsystem.payload.dto.response.Subscription.Subscrip
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 import com.pm.librarymanagementsystem.repository.BookLoanRepository;
 import com.pm.librarymanagementsystem.repository.BookRepository;
+import com.pm.librarymanagementsystem.repository.FineRepository;
 import com.pm.librarymanagementsystem.service.BookLoanService;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
 import com.pm.librarymanagementsystem.service.UserService;
@@ -26,8 +28,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -39,13 +43,12 @@ public class BookLoanServiceImpl implements BookLoanService {
     private final UserService userService;
     private final SubscriptionService subscriptionService;
     private final BookRepository bookRepository;
+    private final FineRepository fineRepository;
 
     @Override
     public BookLoanResponse checkoutBook(BookLoanCheckoutRequest request) {
 
-        User user = userService.getCurrentUserEntity();
-
-        return checkoutBookForUser(user.getId(), request);
+        return checkoutBookForUser(getCurrentUserId(), request);
     }
 
     @Transactional
@@ -102,7 +105,7 @@ public class BookLoanServiceImpl implements BookLoanService {
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         bookRepository.save(book);
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan));
+        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
     }
 
     @Transactional
@@ -134,7 +137,7 @@ public class BookLoanServiceImpl implements BookLoanService {
             bookRepository.save(book);
         }
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan));
+        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
     }
 
     @Transactional
@@ -152,14 +155,11 @@ public class BookLoanServiceImpl implements BookLoanService {
         bookLoan.setRenewalCount(bookLoan.getRenewalCount() + 1);
         bookLoan.setNotes(request.notes());
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan));
+        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
     }
 
     @Override
     public PageResponse<BookLoanResponse> getMyBookLoans(BookLoanStatus status, Pageable pageable) {
-
-        User user = userService.getCurrentUserEntity();
-        Page<BookLoan> response;
 
         Sort sort = (status != null)
                 ? Sort.by("createdAt").descending()
@@ -171,46 +171,31 @@ public class BookLoanServiceImpl implements BookLoanService {
                 sort
         );
 
-        if (status != null) {
-            response = bookLoanRepository.findByStatusAndUser(user, status, sortedPageable);
-        } else {
-            response = bookLoanRepository.findByUserId(user.getId(), sortedPageable);
-        }
+        BookLoansSearchRequest request = new BookLoansSearchRequest(
+        getCurrentUserId(),
+                null,
+                status,
+                false,
+                null,
+                null,
+                null
+        );
 
-        Page<BookLoanResponse> bookLoanResponsePage = response.map(BookLoanMapper::toResponse);
-
-        return new PageResponse<>(bookLoanResponsePage.getContent(),
-                bookLoanResponsePage.getNumber(),
-                bookLoanResponsePage.getSize(),
-                bookLoanResponsePage.getTotalElements(),
-                bookLoanResponsePage.getTotalPages(),
-                bookLoanResponsePage.isLast(),
-                bookLoanResponsePage.isFirst(),
-                bookLoanResponsePage.isEmpty());
+        return getBookLoans(request, sortedPageable);
     }
 
     @Override
     public PageResponse<BookLoanResponse> getBookLoans(BookLoansSearchRequest request, Pageable pageable) {
 
-        Page<BookLoan> response;
-
-        if(Boolean.TRUE.equals(request.overdueOnly())){
-            response = bookLoanRepository.findOverdueBookLoans(LocalDateTime.now(), pageable);
-        }else if(request.userId() != null){
-            response = bookLoanRepository.findByUserId(request.userId(), pageable);
-        }else if(request.bookId() != null){
-            response = bookLoanRepository.findByBookId(request.bookId(), pageable);
-        }else if(request.status() != null){
-            response = bookLoanRepository.findByStatus(request.status(), pageable);
-        }else if(request.startDate() != null && request.endDate() != null){
-            response = bookLoanRepository.findBookLoansByDateRange(
-                    request.startDate(), request.endDate(), pageable
-            );
-        }else {
-            response = bookLoanRepository.findAll(pageable);
-        }
-
-        Page<BookLoanResponse> bookLoanResponsePage = response.map(BookLoanMapper::toResponse);
+        Page<BookLoanResponse> bookLoanResponsePage = bookLoanRepository.getBookLoans(
+                request.userId(),
+                Boolean.TRUE.equals(request.overdueOnly()),
+                request.bookId(),
+                request.status(),
+                request.startDate(),
+                request.endDate(),
+                pageable
+        );
 
         return new PageResponse<>(bookLoanResponsePage.getContent(),
                 bookLoanResponsePage.getNumber(),
@@ -240,5 +225,12 @@ public class BookLoanServiceImpl implements BookLoanService {
         }
 
         return updateCount;
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

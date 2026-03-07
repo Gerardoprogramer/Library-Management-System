@@ -26,5 +26,4 @@ public interface FineRepository extends JpaRepository<Fine, UUID> {
             @Param("type")FineType type,
             Pageable pageable
             );
-
 }

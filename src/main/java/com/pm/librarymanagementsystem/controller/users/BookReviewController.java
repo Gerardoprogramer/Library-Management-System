@@ -60,7 +60,7 @@ public class BookReviewController {
     public ResponseEntity<ApiResponse<PageResponse<BookReviewResponse>>> getReviewsByBook(
             @PathVariable UUID bookId,
             @PageableDefault(
-                    size = 10,
+                    size = 5,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable

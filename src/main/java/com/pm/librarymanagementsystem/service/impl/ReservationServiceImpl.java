@@ -23,6 +23,7 @@ import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -42,9 +43,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ReservationResponse createReservation(ReservationRequest request) {
 
-        User user = userService.getCurrentUserEntity();
-
-        return createReservationForUser(user.getId(), request);
+        return createReservationForUser(getCurrentUserId(), request);
     }
 
     @Override
@@ -156,8 +155,14 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public PageResponse<ReservationResponse> getMyReservations(SearchReservationRequest request, Pageable pageable) {
-        User user = userService.getCurrentUserEntity();
 
-        return searchReservations(user.getId(), request, pageable);
+        return searchReservations(getCurrentUserId(), request, pageable);
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

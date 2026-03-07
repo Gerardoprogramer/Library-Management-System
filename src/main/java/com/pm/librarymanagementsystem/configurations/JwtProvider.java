@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.configurations;
 
+import com.pm.librarymanagementsystem.modal.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -25,15 +26,13 @@ public class JwtProvider {
     }
 
     // ACCESS TOKEN (15 min)
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(User user) {
 
-        String authorities = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+        String authorities = user.getRole().toString();
 
         return Jwts.builder()
-                .subject(authentication.getName())
+                .subject(user.getEmail())
+                .claim("userId", user.getId().toString())
                 .claim("authorities", authorities)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
@@ -83,5 +82,9 @@ public class JwtProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public String extractUserId(String token) {
+        return parseClaims(token).get("userId", String.class);
     }
 }

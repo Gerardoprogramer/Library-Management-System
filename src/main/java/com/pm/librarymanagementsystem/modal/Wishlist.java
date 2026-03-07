@@ -11,6 +11,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"user_id", "book_id"}
+        ),
+        indexes = {
+        @Index(name = "idx_wishlist_user", columnList = "user_id"),
+        @Index(name = "idx_wishlist_book", columnList = "book_id")
+            }
+)
 @Getter
 @Setter
 @NoArgsConstructor

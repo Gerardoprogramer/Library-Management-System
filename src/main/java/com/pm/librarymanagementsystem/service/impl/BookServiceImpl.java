@@ -6,6 +6,7 @@ import com.pm.librarymanagementsystem.mapper.BookMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Genre;
 import com.pm.librarymanagementsystem.modal.User;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookDetailsResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest;
@@ -13,13 +14,17 @@ import com.pm.librarymanagementsystem.payload.dto.request.book.SearchBookRequest
 import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse;
 import com.pm.librarymanagementsystem.repository.BookRepository;
+import com.pm.librarymanagementsystem.repository.BookReviewRepository;
 import com.pm.librarymanagementsystem.repository.GenreRepository;
+import com.pm.librarymanagementsystem.repository.WishlistRepository;
 import com.pm.librarymanagementsystem.service.BookService;
+import com.pm.librarymanagementsystem.service.RatingStats;
 import com.pm.librarymanagementsystem.service.UserService;
 import com.pm.librarymanagementsystem.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,8 +38,8 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
-    private final WishlistService wishlistService;
-    private final UserService userService;
+    private final BookReviewRepository bookReviewRepository;
+    private final WishlistRepository wishlistRepository;
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
@@ -53,12 +58,38 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponse getBookById(UUID id) {
+    public BookDetailsResponse getBookById(UUID id) {
 
-        Book book = bookRepository.findById(id)
-                .orElseThrow(()-> new NotFoundException("Libro no encontrado"));
+        BookDetailsResponse base = bookRepository.findBookBase(id)
+                .orElseThrow(() -> new NotFoundException("Libro no encontrado"));
 
-        return BookMapper.toResponse(book);
+        RatingStats stats = bookReviewRepository.getRatingStats(id);
+
+        Double avg = stats.getAverage();
+        Long count = stats.getTotal();
+
+        boolean inWishlist = wishlistRepository.isInWishlist(id, getCurrentUserId());
+
+        return new BookDetailsResponse(
+                base.id(),
+                base.isbn(),
+                base.title(),
+                base.author(),
+                base.genreName(),
+                base.publisher(),
+                base.publishedDate(),
+                base.language(),
+                base.pages(),
+                base.description(),
+                base.totalCopies(),
+                base.availableCopies(),
+                inWishlist,
+                base.price(),
+                base.coverImageUrl(),
+                base.active(),
+                avg,
+                count
+        );
     }
 
     @Override
@@ -107,13 +138,11 @@ public class BookServiceImpl implements BookService {
     @Override
     public PageResponse<BookSummaryResponse> searchBooksWithFilters(SearchBookRequest searchBookRequest, Pageable pageable) {
 
-        User user = userService.getCurrentUserEntity();
-
         Page<BookSummaryResponse> bookPage =  bookRepository.searchBooksWithSummary(
                 searchBookRequest.searchTerm(),
                 searchBookRequest.genreId(),
                 searchBookRequest.availableOnly(),
-                user.getId(),
+                getCurrentUserId(),
                 pageable
 
         );
@@ -138,4 +167,10 @@ public class BookServiceImpl implements BookService {
         return bookRepository.countAvailableBooks();
     }
 
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+    }
 }

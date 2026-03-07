@@ -14,8 +14,7 @@ public class BookReviewMapper {
     public static BookReviewResponse toResponse(BookReview review) {
         return new BookReviewResponse(
                 review.getId(),
-                review.getBook().getId(),
-                review.getUser().getId(),
+                review.getUser().getFullName(),
                 review.getRating(),
                 review.getReviewText(),
                 review.getTitle(),

@@ -15,6 +15,7 @@ import com.pm.librarymanagementsystem.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -47,9 +48,8 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     public void removeFromWishlist(UUID bookId) {
-        User user = userService.getCurrentUserEntity();
 
-        Wishlist wishlist = wishlistRepository.findByUserIdAndBookId(user.getId(), bookId);
+        Wishlist wishlist = wishlistRepository.findByUserIdAndBookId(getCurrentUserId(), bookId);
 
         if(wishlist == null){
             throw new NotFoundException("No se encontro el libro en la lista de deseos");
@@ -60,8 +60,8 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     public PageResponse<WishlistResponse> getMyWishlist(Pageable pageable) {
-        User user = userService.getCurrentUserEntity();
-        Page<Wishlist> wishlistPage = wishlistRepository.findByUserId(user.getId(), pageable);
+
+        Page<Wishlist> wishlistPage = wishlistRepository.findByUserId(getCurrentUserId(), pageable);
 
         Page<WishlistResponse> mappedPage = wishlistPage.map(WishlistMapper::toResponse);
 
@@ -75,5 +75,12 @@ public class WishlistServiceImpl implements WishlistService {
                 mappedPage.isFirst(),
                 mappedPage.isEmpty()
         );
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

@@ -22,14 +22,14 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @PostMapping("/{bookId}")
-    public ResponseEntity<ApiResponse<WishlistResponse>> addWishlist(
+    public ResponseEntity<ApiResponse<Void>> addWishlist(
             @PathVariable UUID bookId,
             @RequestParam(required = false) String notes
     ){
+        wishlistService.addWishlist(bookId, notes);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        "Libro agregado a la lista de deseos",
-                        wishlistService.addWishlist(bookId, notes)
+                        "Libro agregado a la lista de deseos"
                 ));
     }
 

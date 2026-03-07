@@ -3,8 +3,10 @@ package com.pm.librarymanagementsystem.controller.users;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.book.SearchBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookDetailsResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookStatsResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse;
 import com.pm.librarymanagementsystem.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +25,7 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookResponse>> getBookById(
+    public ResponseEntity<ApiResponse<BookDetailsResponse>> getBookById(
             @PathVariable UUID id){
 
         return ResponseEntity.ok(
@@ -34,7 +36,7 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> searchBooks(
+    public ResponseEntity<ApiResponse<PageResponse<BookSummaryResponse>>> searchBooks(
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) UUID genreId,
             @RequestParam(required = false, defaultValue = "false") Boolean availableOnly,
@@ -48,7 +50,7 @@ public class BookController {
                 searchTerm, genreId, availableOnly
         );
 
-        PageResponse<BookResponse> books = bookService.searchBooksWithFilters(bookRequest, pageable);
+        PageResponse<BookSummaryResponse> books = bookService.searchBooksWithFilters(bookRequest, pageable);
 
         String message = books.empty()
                 ? "No se encontraron libros"

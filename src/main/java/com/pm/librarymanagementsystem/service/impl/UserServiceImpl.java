@@ -22,9 +22,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+
+        User user = userRepository.findById(getCurrentUserId()).orElseThrow(
+                ()-> new NotFoundException("Usuario no encontrado"));
 
         return UserMapper.toResponse(user);
     }
@@ -40,16 +40,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUserEntity() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+        return userRepository.findById(getCurrentUserId()).orElseThrow(
+                ()-> new NotFoundException("Usuario no encontrado"));
     }
 
     @Override
     public User findById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(()-> new NotFoundException("No se encontro el Usuario"));
+    }
+
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 
 }
