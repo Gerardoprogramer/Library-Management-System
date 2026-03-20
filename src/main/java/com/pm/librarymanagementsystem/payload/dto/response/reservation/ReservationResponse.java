@@ -9,6 +9,9 @@ public record ReservationResponse(
         UUID id,
 
         UUID bookId,
+        String bookTitle,
+        String author,
+        String bookCoverImageUrl,
         UUID userId,
 
         ReservationStatus status,

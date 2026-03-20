@@ -16,6 +16,9 @@ public class ReservationMapper {
                 reservation.getId(),
 
                 reservation.getBook().getId(),
+                reservation.getBook().getTitle(),
+                reservation.getBook().getAuthor(),
+                reservation.getBook().getCoverImageUrl(),
                 reservation.getUser().getId(),
 
                 reservation.getStatus(),

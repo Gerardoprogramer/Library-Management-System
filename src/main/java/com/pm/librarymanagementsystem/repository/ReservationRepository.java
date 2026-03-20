@@ -40,8 +40,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
     @Query("""
     select r from Reservation r where
     (:userId is null or r.user.id = :userId) and
-    (:bookId is null or r.status = :bookId) and
-    (:status is null or r.user.id = :status) and
+    (:bookId is null or r.book.id = :bookId) and
+    (:status is null or r.status = :status) and
     (:activeOnly = false or (r.status = 'PENDING' or r.status = 'AVAILABLE'))
 """)
     Page<Reservation> searchReservationsWithFilters(
