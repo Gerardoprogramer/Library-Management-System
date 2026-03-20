@@ -133,23 +133,22 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public PageResponse<ReservationResponse> searchReservations(UUID userId, SearchReservationRequest request, Pageable pageable) {
 
-        Page<Reservation> reservations = reservationRepository.searchReservationsWithFilters(
+        Page<ReservationResponse> reservations = reservationRepository.searchReservationsWithFilters(
                         userId,
                         request.bookId(),
                         request.status(),
                         request.activityOnly() != null ? request.activityOnly() : false,
                 pageable);
-        Page<ReservationResponse> mappedPage = reservations.map(ReservationMapper::toResponse);
 
         return new PageResponse<>(
-                mappedPage.getContent(),
-                mappedPage.getNumber(),
-                mappedPage.getSize(),
-                mappedPage.getTotalElements(),
-                mappedPage.getTotalPages(),
-                mappedPage.isLast(),
-                mappedPage.isFirst(),
-                mappedPage.isEmpty()
+                reservations.getContent(),
+                reservations.getNumber(),
+                reservations.getSize(),
+                reservations.getTotalElements(),
+                reservations.getTotalPages(),
+                reservations.isLast(),
+                reservations.isFirst(),
+                reservations.isEmpty()
         );
     }
 
