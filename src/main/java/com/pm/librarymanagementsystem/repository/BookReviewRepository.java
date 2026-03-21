@@ -20,6 +20,7 @@ public interface BookReviewRepository extends JpaRepository<BookReview, UUID> {
     @Query("""
    SELECT new com.pm.librarymanagementsystem.payload.dto.response.bookReview.BookReviewResponse(
        r.id,
+       u.id,
        u.fullName,
        r.rating,
        r.reviewText,
