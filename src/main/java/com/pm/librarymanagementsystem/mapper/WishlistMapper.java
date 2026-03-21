@@ -15,8 +15,12 @@ public class WishlistMapper {
     public static WishlistResponse toResponse(Wishlist wishlist) {
 
         return new WishlistResponse(
-                wishlist.getBook(),
-                wishlist.getUser(),
+                wishlist.getId(),
+                wishlist.getBook().getId(),
+                wishlist.getBook().getTitle(),
+                wishlist.getBook().getAuthor(),
+                wishlist.getBook().getCoverImageUrl(),
+                wishlist.getBook().getAvailableCopies(),
                 wishlist.getNotes(),
                 wishlist.getAddedAt()
         );

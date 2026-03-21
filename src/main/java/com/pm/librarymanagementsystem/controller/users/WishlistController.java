@@ -46,8 +46,8 @@ public class WishlistController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<WishlistResponse>>> getMyWishlist(
             @PageableDefault(
-                    size = 20,
-                    sort = "createdAt",
+                    size = 10,
+                    sort = "addedAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable){
         return ResponseEntity.ok(ApiResponse.success(
