@@ -63,4 +63,14 @@ public class ReservationController {
                 reservationService.getMyReservations(request, pageable)
         ));
     }
+
+    @GetMapping("/queue/{bookId}")
+    public ResponseEntity<ApiResponse<Long>> positionQueue(
+            @PathVariable UUID bookId
+    ){
+        return ResponseEntity.ok(ApiResponse.success(
+                "La Queue del libro es",
+                reservationService.positionUserForBook(bookId)
+        ));
+    }
 }

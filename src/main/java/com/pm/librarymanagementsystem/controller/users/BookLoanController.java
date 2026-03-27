@@ -24,13 +24,12 @@ public class BookLoanController {
     private final BookLoanService bookLoanService;
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<BookLoanResponse>> checkoutBook(
+    public ResponseEntity<ApiResponse<Void>> checkoutBook(
             @Valid @RequestBody BookLoanCheckoutRequest request
     ){
-
+        bookLoanService.checkoutBook(request);
         return ResponseEntity.ok(ApiResponse.success(
-                "Préstamo creado correctamente",
-                bookLoanService.checkoutBook(request)
+                "Préstamo creado correctamente"
         ));
     }
 

@@ -14,48 +14,63 @@ import java.util.UUID;
 
 public interface BookRepository extends JpaRepository<Book, UUID> {
 
-    Optional<Book> findByIsbn(String isbn);
-
     boolean existsByIsbn(String isbn);
 
-    @Query("""
-        SELECT new com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse(
-            b.id,
-            b.title,
-            b.author,
-            g.name,
-            b.pages,
-            b.availableCopies,
-            b.coverImageUrl,
-            CASE WHEN COUNT(DISTINCT w.id) > 0 THEN true ELSE false END,
-            COALESCE(AVG(r.rating), 0),
-            COUNT(DISTINCT r.id)
-        )
-        FROM Book b
-        LEFT JOIN b.genre g
-        LEFT JOIN BookReview r ON r.book.id = b.id
-        LEFT JOIN Wishlist w 
-            ON w.book.id = b.id 
-            AND w.user.id = :userId
-        WHERE
-        (
-            (coalesce(:searchTerm, '') = '' OR
-             lower(b.title) like lower(concat('%', :searchTerm, '%')) OR
-             lower(b.author) like lower(concat('%', :searchTerm, '%')) OR
-             lower(b.isbn) like lower(concat('%', :searchTerm, '%')))
-        )
-        AND (:genreId is null or g.id = :genreId)
-        AND (:availableOnly = false or b.availableCopies > 0)
-        AND b.active = true
-        GROUP BY
-            b.id,
-            b.title,
-            b.author,
-            g.name,
-            b.pages,
-            b.availableCopies,
-            b.coverImageUrl
-        """)
+    @Query(
+            value = """
+                SELECT new com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse(
+                    b.id,
+                    b.title,
+                    b.author,
+                    g.name,
+                    b.pages,
+                    b.availableCopies,
+                    b.coverImageUrl,
+                    CASE WHEN COUNT(DISTINCT w.id) > 0 THEN true ELSE false END,
+                    COALESCE(AVG(r.rating), 0),
+                    COUNT(DISTINCT r.id)
+                )
+                FROM Book b
+                LEFT JOIN b.genre g
+                LEFT JOIN BookReview r ON r.book.id = b.id
+                LEFT JOIN Wishlist w 
+                    ON w.book.id = b.id 
+                    AND w.user.id = :userId
+                WHERE
+                (
+                    (coalesce(:searchTerm, '') = '' OR
+                     lower(b.title) like lower(concat('%', :searchTerm, '%')) OR
+                     lower(b.author) like lower(concat('%', :searchTerm, '%')) OR
+                     lower(b.isbn) like lower(concat('%', :searchTerm, '%')))
+                )
+                AND (:genreId is null or g.id = :genreId)
+                AND (:availableOnly = false or b.availableCopies > 0)
+                AND b.active = true
+                GROUP BY
+                    b.id,
+                    b.title,
+                    b.author,
+                    g.name,
+                    b.pages,
+                    b.availableCopies,
+                    b.coverImageUrl
+                """,
+            countQuery = """
+                SELECT count(b.id)
+                FROM Book b
+                LEFT JOIN b.genre g
+                WHERE
+                (
+                    (coalesce(:searchTerm, '') = '' OR
+                     lower(b.title) like lower(concat('%', :searchTerm, '%')) OR
+                     lower(b.author) like lower(concat('%', :searchTerm, '%')) OR
+                     lower(b.isbn) like lower(concat('%', :searchTerm, '%')))
+                )
+                AND (:genreId is null or g.id = :genreId)
+                AND (:availableOnly = false or b.availableCopies > 0)
+                AND b.active = true
+                """
+    )
     Page<BookSummaryResponse> searchBooksWithSummary(
             @Param("searchTerm") String searchTerm,
             @Param("genreId") UUID genreId,
@@ -91,12 +106,14 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
         b.coverImageUrl,
         b.active,
         0.0,
-        0L
+        0L,
+        false,
+        false,
+        false
     )
     FROM Book b
     JOIN b.genre g
     WHERE b.id = :bookId
 """)
     Optional<BookDetailsResponse> findBookBase(@Param("bookId") UUID bookId);
-
 }

@@ -158,6 +158,11 @@ public class ReservationServiceImpl implements ReservationService {
         return searchReservations(getCurrentUserId(), request, pageable);
     }
 
+    @Override
+    public Long positionUserForBook(UUID bookId) {
+        return reservationRepository.countPendingReservationByBook(bookId);
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()

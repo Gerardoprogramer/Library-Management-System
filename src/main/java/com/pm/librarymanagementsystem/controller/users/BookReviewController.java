@@ -25,24 +25,25 @@ public class BookReviewController {
     private final BookReviewService bookReviewService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<BookReviewResponse>> createReview(
+    public ResponseEntity<ApiResponse<Void>> createReview(
             @Valid @RequestBody CreateReviewRequest request
             ){
+
+        bookReviewService.createReview(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        "Reseña creada",
-                        bookReviewService.createReview(request)
+                        "Reseña creada correctamente"
                 ));
     }
 
     @PutMapping("/{reviewId}")
-    public ResponseEntity<ApiResponse<BookReviewResponse>> updateReview(
+    public ResponseEntity<ApiResponse<Void>> updateReview(
             @PathVariable UUID reviewId,
             @Valid @RequestBody UpdateReviewRequest request
     ){
+        bookReviewService.updateReview(reviewId, request);
         return ResponseEntity.ok(ApiResponse.success(
-                        "Reseña actualizada",
-                        bookReviewService.updateReview(reviewId, request)
+                        "Reseña actualizada"
                 ));
     }
 

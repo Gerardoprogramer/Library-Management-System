@@ -21,4 +21,6 @@ public interface ReservationService {
     PageResponse<ReservationResponse> searchReservations(UUID userId, SearchReservationRequest request, Pageable pageable);
 
     PageResponse<ReservationResponse> getMyReservations(SearchReservationRequest request, Pageable pageable);
+
+    Long positionUserForBook(UUID bookId);
 }

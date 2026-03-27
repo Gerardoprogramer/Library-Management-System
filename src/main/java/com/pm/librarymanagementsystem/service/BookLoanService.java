@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface BookLoanService {
 
-    BookLoanResponse checkoutBook(BookLoanCheckoutRequest request);
+    void checkoutBook(BookLoanCheckoutRequest request);
 
     BookLoanResponse checkoutBookForUser(UUID userId, BookLoanCheckoutRequest request);
 

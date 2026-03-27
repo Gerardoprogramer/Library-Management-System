@@ -53,9 +53,7 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
             Pageable pageable
             );
 
-
     boolean existsByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, BookLoanStatus status);
-
 
     @Query("""
         SELECT new com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse(

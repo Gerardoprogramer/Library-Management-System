@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.exception.ConflictException;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookMapper;
@@ -13,10 +14,7 @@ import com.pm.librarymanagementsystem.payload.dto.request.book.CreateBookRequest
 import com.pm.librarymanagementsystem.payload.dto.request.book.SearchBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.book.UpdateBookRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.book.BookSummaryResponse;
-import com.pm.librarymanagementsystem.repository.BookRepository;
-import com.pm.librarymanagementsystem.repository.BookReviewRepository;
-import com.pm.librarymanagementsystem.repository.GenreRepository;
-import com.pm.librarymanagementsystem.repository.WishlistRepository;
+import com.pm.librarymanagementsystem.repository.*;
 import com.pm.librarymanagementsystem.service.BookService;
 import com.pm.librarymanagementsystem.service.RatingStats;
 import com.pm.librarymanagementsystem.service.UserService;
@@ -40,6 +38,7 @@ public class BookServiceImpl implements BookService {
     private final GenreRepository genreRepository;
     private final BookReviewRepository bookReviewRepository;
     private final WishlistRepository wishlistRepository;
+    private final BookLoanRepository loanRepository;
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
@@ -59,16 +58,25 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDetailsResponse getBookById(UUID id) {
-
         BookDetailsResponse base = bookRepository.findBookBase(id)
                 .orElseThrow(() -> new NotFoundException("Libro no encontrado"));
 
         RatingStats stats = bookReviewRepository.getRatingStats(id);
+        UUID userId = getCurrentUserId();
 
-        Double avg = stats.getAverage();
-        Long count = stats.getTotal();
+        boolean hasReturned = false;
+        boolean alreadyReviewed = false;
+        boolean inWishlist = false;
 
-        boolean inWishlist = wishlistRepository.isInWishlist(id, getCurrentUserId());
+        if (userId != null) {
+            hasReturned = loanRepository.existsByUserIdAndBookIdAndStatus(userId, id, BookLoanStatus.RETURNED);
+
+            alreadyReviewed = bookReviewRepository.existsByUserIdAndBookId(userId, id);
+
+            inWishlist = wishlistRepository.isInWishlist(id, userId);
+        }
+
+        boolean canReview = hasReturned && !alreadyReviewed;
 
         return new BookDetailsResponse(
                 base.id(),
@@ -87,8 +95,11 @@ public class BookServiceImpl implements BookService {
                 base.price(),
                 base.coverImageUrl(),
                 base.active(),
-                avg,
-                count
+                stats.getAverage(),
+                stats.getTotal(),
+                canReview,
+                hasReturned,
+                alreadyReviewed
         );
     }
 

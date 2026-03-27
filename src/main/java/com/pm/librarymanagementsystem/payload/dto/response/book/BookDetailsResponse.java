@@ -26,6 +26,9 @@ public record BookDetailsResponse(
         String coverImageUrl,
         Boolean active,
         Double averageRating,
-        Long totalReviews
+        Long totalReviews,
+        boolean canReview,
+        boolean hasReturned,
+        boolean alreadyReviewed
 ) {
 }

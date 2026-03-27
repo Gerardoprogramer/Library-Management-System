@@ -46,9 +46,8 @@ public class BookLoanServiceImpl implements BookLoanService {
     private final FineRepository fineRepository;
 
     @Override
-    public BookLoanResponse checkoutBook(BookLoanCheckoutRequest request) {
-
-        return checkoutBookForUser(getCurrentUserId(), request);
+    public void checkoutBook(BookLoanCheckoutRequest request) {
+        checkoutBookForUser(getCurrentUserId(), request);
     }
 
     @Transactional

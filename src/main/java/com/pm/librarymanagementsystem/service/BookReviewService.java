@@ -10,9 +10,9 @@ import java.util.UUID;
 
 public interface BookReviewService {
 
-    BookReviewResponse createReview(CreateReviewRequest request);
+    void createReview(CreateReviewRequest request);
 
-    BookReviewResponse updateReview(UUID reviewId, UpdateReviewRequest updateReviewRequest);
+    void updateReview(UUID reviewId, UpdateReviewRequest updateReviewRequest);
 
     void deleteReview(UUID reviewId);
 
