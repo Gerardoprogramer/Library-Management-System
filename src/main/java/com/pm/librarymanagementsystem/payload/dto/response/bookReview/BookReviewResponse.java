@@ -11,6 +11,10 @@ public record BookReviewResponse(
         String reviewText,
         String title,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        UUID bookId,
+        String bookTitle,
+        String coverImageUrl
         ) {
 }

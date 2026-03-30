@@ -3,6 +3,7 @@ package com.pm.librarymanagementsystem.mapper;
 import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
 import com.pm.librarymanagementsystem.modal.User;
+import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionPostResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
 
@@ -48,6 +49,7 @@ public class SubscriptionMapper {
                 subscription.getMaxDaysPerBook(),
                 subscription.isActive(),
                 subscription.isAutoRenew(),
+                subscription.getNextBillingDate(),
                 subscription.getStartDate(),
                 subscription.getEndDate(),
                 subscription.getDaysRemaining(),

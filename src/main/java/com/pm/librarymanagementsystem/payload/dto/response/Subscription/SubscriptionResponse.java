@@ -25,6 +25,8 @@ public record SubscriptionResponse(
 
         boolean autoRenew,
 
+        LocalDateTime nextBillingDate,
+
         LocalDateTime startDate,
 
         LocalDateTime endDate,

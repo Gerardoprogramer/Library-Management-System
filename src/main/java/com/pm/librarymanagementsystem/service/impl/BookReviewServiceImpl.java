@@ -110,6 +110,23 @@ public class BookReviewServiceImpl implements BookReviewService {
         );
     }
 
+    @Override
+    public PageResponse<BookReviewResponse> getMeReviews(Pageable pageable) {
+
+        Page<BookReviewResponse> page = bookReviewRepository.findReviewsByUserId(getCurrentUserId(), pageable);
+
+        return new PageResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast(),
+                page.isFirst(),
+                page.isEmpty()
+        );
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()

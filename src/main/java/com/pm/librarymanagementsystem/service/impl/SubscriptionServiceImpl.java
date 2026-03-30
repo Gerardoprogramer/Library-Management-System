@@ -1,17 +1,23 @@
 package com.pm.librarymanagementsystem.service.impl;
 
+import com.pm.librarymanagementsystem.domain.Currency;
+import com.pm.librarymanagementsystem.domain.PaymentType;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.SubscriptionMapper;
 
 import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.modal.SubscriptionPlan;
 import com.pm.librarymanagementsystem.modal.User;
+import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionPostResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CancelSubscriptionRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
 import com.pm.librarymanagementsystem.repository.SubscriptionPlanRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
+import com.pm.librarymanagementsystem.service.PaymentService;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
 import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +25,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -31,9 +39,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final UserService userService;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final PaymentService paymentService;
 
     @Override
-    public SubscriptionResponse subscribe(CreateSubscriptionRequest request) {
+    @Transactional
+    public SubscriptionPostResponse subscribe(CreateSubscriptionRequest request) {
 
         User user = userService.getCurrentUserEntity();
 
@@ -42,10 +52,27 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 ()-> new NotFoundException("EL plan no existe"));
 
         Subscription subscription = SubscriptionMapper.toEntity(request, user, plan);
-        //se activa cuando tenga el payment
         subscription.setActive(false);
+        subscription = subscriptionRepository.save(subscription);
 
-        return SubscriptionMapper.toResponse(subscriptionRepository.save(subscription));
+        InitiatePaymentRequest paymentReq = InitiatePaymentRequest.builder()
+                .payableId(subscription.getId())
+                .paymentType(PaymentType.MEMBERSHIP)
+                .amount(BigDecimal.valueOf(subscription.getPrice()))
+                .currency(Currency.USD)
+                .description("Suscripción al plan: " + plan.getName())
+                .build();
+
+        InitiatePaymentResponse paymentResponse = paymentService.initiatePayment(user.getId(), paymentReq);
+
+        SubscriptionResponse response = SubscriptionMapper.toResponse(subscription);
+
+        return new SubscriptionPostResponse(
+                response.id(),
+                response.planName(),
+                response.active(),
+                paymentResponse.checkoutUrl()
+        );
     }
 
     @Override

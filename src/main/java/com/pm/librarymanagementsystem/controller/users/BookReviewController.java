@@ -71,4 +71,18 @@ public class BookReviewController {
                 bookReviewService.getReviewsByBookId(bookId, pageable)
         ));
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<BookReviewResponse>>> getMeReviews(
+            @PageableDefault(
+                    size = 5,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ){
+        return ResponseEntity.ok(ApiResponse.success(
+                "se listo todas las reseñas del usuario",
+                bookReviewService.getMeReviews(pageable)
+        ));
+    }
 }

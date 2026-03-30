@@ -26,8 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -78,8 +76,6 @@ public class FineServiceImpl implements FineService {
                 .amount(fine.getAmount())
                 .currency(fine.getCurrency())
                 .description("pago de multas de la biblioteca")
-                .successUrl("http://localhost:5173/success")
-                .cancelUrl("http://localhost:5173/cancel")
                 .build();
 
         return paymentService.initiatePayment(getCurrentUserId(), request);

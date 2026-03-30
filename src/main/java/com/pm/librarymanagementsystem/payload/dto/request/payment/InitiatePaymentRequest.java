@@ -25,12 +25,6 @@ public record InitiatePaymentRequest(
         Currency currency,
 
         @Size(max = 255)
-        String description,
-
-        @NotBlank(message = "La successUrl es obligatoria")
-        String successUrl,
-
-        @NotBlank(message = "La cancelUrl es obligatoria")
-        String cancelUrl
+        String description
 ) {
 }

@@ -18,20 +18,24 @@ public interface BookReviewRepository extends JpaRepository<BookReview, UUID> {
     boolean existsByUserIdAndBookId(UUID userId, UUID bookId);
 
     @Query("""
-   SELECT new com.pm.librarymanagementsystem.payload.dto.response.bookReview.BookReviewResponse(
-       r.id,
-       u.id,
-       u.fullName,
-       r.rating,
-       r.reviewText,
-       r.title,
-       r.createdAt,
-       r.updatedAt
-   )
-   FROM BookReview r
-   JOIN r.user u
-   WHERE r.book.id = :bookId
-   ORDER BY r.createdAt DESC
+       SELECT new com.pm.librarymanagementsystem.payload.dto.response.bookReview.BookReviewResponse(
+           r.id,
+           u.id,
+           u.fullName,
+           r.rating,
+           r.reviewText,
+           r.title,
+           r.createdAt,
+           r.updatedAt,
+           b.id,
+           b.title,
+           b.coverImageUrl
+       )
+       FROM BookReview r
+       JOIN r.user u
+       JOIN r.book b
+       WHERE b.id = :bookId
+       ORDER BY r.createdAt DESC
 """)
     Page<BookReviewResponse> findReviewsByBookId(
             @Param("bookId") UUID bookId,
@@ -47,4 +51,29 @@ public interface BookReviewRepository extends JpaRepository<BookReview, UUID> {
     WHERE r.book.id = :bookId
 """)
     RatingStats getRatingStats(UUID bookId);
+
+    @Query("""
+       SELECT new com.pm.librarymanagementsystem.payload.dto.response.bookReview.BookReviewResponse(
+           r.id,
+           u.id,
+           u.fullName,
+           r.rating,
+           r.reviewText,
+           r.title,
+           r.createdAt,
+           r.updatedAt,
+           b.id,
+           b.title,
+           b.coverImageUrl
+       )
+       FROM BookReview r
+       JOIN r.user u
+       JOIN r.book b
+       WHERE u.id = :userId
+       ORDER BY r.createdAt DESC
+""")
+    Page<BookReviewResponse> findReviewsByUserId(
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
 }

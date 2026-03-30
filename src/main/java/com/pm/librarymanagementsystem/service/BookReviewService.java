@@ -17,4 +17,6 @@ public interface BookReviewService {
     void deleteReview(UUID reviewId);
 
     PageResponse<BookReviewResponse> getReviewsByBookId(UUID bookId, Pageable pageable);
+
+    PageResponse<BookReviewResponse>  getMeReviews(Pageable pageable);
 }

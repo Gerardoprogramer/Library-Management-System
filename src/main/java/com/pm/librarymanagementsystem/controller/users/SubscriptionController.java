@@ -3,6 +3,7 @@ package com.pm.librarymanagementsystem.controller.users;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CancelSubscriptionRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
+import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionPostResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionResponse;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
 import jakarta.validation.Valid;
@@ -21,7 +22,7 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<SubscriptionResponse>> subscribe(
+    public ResponseEntity<ApiResponse<SubscriptionPostResponse>> subscribe(
             @Valid @RequestBody CreateSubscriptionRequest request){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(

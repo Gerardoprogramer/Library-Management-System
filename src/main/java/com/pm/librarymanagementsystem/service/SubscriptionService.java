@@ -1,6 +1,7 @@
 package com.pm.librarymanagementsystem.service;
 
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionPostResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.Subscription.SubscriptionResponse;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CancelSubscriptionRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.Subscription.CreateSubscriptionRequest;
@@ -10,7 +11,7 @@ import java.util.UUID;
 
 public interface SubscriptionService {
 
-    SubscriptionResponse subscribe(CreateSubscriptionRequest request);
+    SubscriptionPostResponse subscribe(CreateSubscriptionRequest request);
 
     SubscriptionResponse getUsersActiveSubscription();
 

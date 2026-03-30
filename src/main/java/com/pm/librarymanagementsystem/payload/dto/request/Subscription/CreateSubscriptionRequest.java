@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record CreateSubscriptionRequest(
 
-        @NotNull(message = "El plan de suscripción es obligatorio")
+        @NotNull(message = "El plan de subscripción es obligatorio")
         UUID subscriptionPlanId,
 
         Boolean autoRenew,
