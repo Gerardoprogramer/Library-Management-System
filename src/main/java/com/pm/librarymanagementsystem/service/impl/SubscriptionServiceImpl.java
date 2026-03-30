@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -55,10 +56,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setActive(false);
         subscription = subscriptionRepository.save(subscription);
 
+        BigDecimal priceInDollars = BigDecimal.valueOf(plan.getPrice())
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+
         InitiatePaymentRequest paymentReq = InitiatePaymentRequest.builder()
                 .payableId(subscription.getId())
                 .paymentType(PaymentType.MEMBERSHIP)
-                .amount(BigDecimal.valueOf(subscription.getPrice()))
+                .amount(priceInDollars)
                 .currency(Currency.USD)
                 .description("Suscripción al plan: " + plan.getName())
                 .build();
