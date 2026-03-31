@@ -29,10 +29,10 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-
     @Override
     @Async
     public void sendSubscriptionEmail(String to, String userName, String planName, LocalDateTime endDate) {
+        log.info("Iniciando envío de correo de suscripción para: {}", to);
         sendEmailTemplate(to, "subscription-success", Map.of(
                 "userName", userName,
                 "planName", planName,
@@ -50,6 +50,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async
     public void sendRenewalPaymentRequiredEmail(String to, String userName, String planName, String renewalLink, LocalDateTime endDate) {
         sendEmailTemplate(
                 to,
@@ -79,9 +80,10 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(bodyHtml, true);
 
             javaMailSender.send(message);
+            log.info("Correo enviado exitosamente a {} con plantilla {}", to, templateName);
 
-        } catch (MailException | MessagingException e) {
-            log.error("Error enviando correo a {}: {}", to, e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("FALLO CRÍTICO DE CORREO: No se pudo enviar a {}. Motivo: {}", to, e.getMessage());
         }
     }
 }
