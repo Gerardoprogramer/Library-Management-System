@@ -85,10 +85,14 @@ public class PaymentController {
 
     @CrossOrigin(origins = "https://obsidian-delta-kohl.vercel.app")
     @GetMapping("/success-details/{sessionId}")
-    public ResponseEntity<PaymentResponseDTO> getDetails(@PathVariable String sessionId) {
+    public ResponseEntity<ApiResponse<PaymentResponseDTO>> getDetails(@PathVariable String sessionId) {
         try {
             PaymentResponseDTO details = paymentService.getPaymentDetails(sessionId);
-            return ResponseEntity.ok(details);
+            System.out.println(details.plan());
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Se completo correctamente",
+                    details
+            ));
         } catch (StripeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
