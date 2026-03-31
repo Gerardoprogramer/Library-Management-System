@@ -62,6 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .orElseThrow(() -> new RuntimeException("No se encontro la Multa"));
         }
 
+        System.out.println("Primer sout");
 
         // Mapper base
         Payment payment = PaymentMapper.fromInitiateRequest(request);

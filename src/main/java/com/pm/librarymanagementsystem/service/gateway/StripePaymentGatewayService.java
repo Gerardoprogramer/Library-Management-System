@@ -64,7 +64,7 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                             .putMetadata("plan", request.plan())
 
                             .build();
-
+            System.out.println("siete sout");
             Session session = Session.create(params);
 
             return new GatewayPaymentResponse(
@@ -145,7 +145,7 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                             .putMetadata("paymentId", payment.getId().toString())
 
                             .build();
-
+            System.out.println("seis sout");
             Session session = Session.create(params);
 
             return new GatewayPaymentResponse(

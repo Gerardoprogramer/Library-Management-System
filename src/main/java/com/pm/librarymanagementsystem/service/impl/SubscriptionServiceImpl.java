@@ -69,6 +69,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .plan(subscription.getPlanName())
                 .build();
 
+        System.out.println("segundo sout");
         InitiatePaymentResponse paymentResponse = paymentService.initiatePayment(user.getId(), paymentReq);
 
         SubscriptionResponse response = SubscriptionMapper.toResponse(subscription);

@@ -129,7 +129,7 @@ public class StripeWebhookService {
             } else {
                 activateSubscription(s);
             }
-
+            System.out.println("tercer sout");
 /*            emailService.sendSubscriptionEmail(
                     payment.getUser().getEmail(),
                     payment.getUser().getFullName(),
@@ -138,7 +138,7 @@ public class StripeWebhookService {
         }else if(payable instanceof Fine f){
             CancelFine(f);
         }
-
+        System.out.println("cuarto sout");
         paymentRepository.save(payment);
 
     }
