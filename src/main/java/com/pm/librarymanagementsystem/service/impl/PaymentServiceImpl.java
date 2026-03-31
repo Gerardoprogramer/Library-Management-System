@@ -180,7 +180,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException {
+        System.out.println("DEBUG: Consultando sesión en Stripe: " + sessionId);
         Session session = Session.retrieve(sessionId);
+        System.out.println("DEBUG: Sesión recuperada de Stripe con éxito");
 
         Map<String, String> metadata = session.getMetadata();
         String typeFromMeta = metadata.getOrDefault("type", "GENERAL");
