@@ -238,8 +238,8 @@ public class PaymentServiceImpl implements PaymentService {
                 currency,
                 status,
                 description,
-                paymentId,
                 customerEmail,
+                LocalDateTime.now(),
                 type,
                 plan
         );
