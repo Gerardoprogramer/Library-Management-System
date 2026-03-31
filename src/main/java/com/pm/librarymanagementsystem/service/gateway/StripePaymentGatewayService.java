@@ -31,7 +31,7 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                     SessionCreateParams.builder()
                             .setMode(SessionCreateParams.Mode.PAYMENT)
 
-                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success")
+                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}")
                             .setCancelUrl("https://obsidian-delta-kohl.vercel.app/dashboard/subscription")
 
                             .addPaymentMethodType(
@@ -60,6 +60,8 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                             )
 
                             .putMetadata("paymentId", payment.getId().toString())
+                            .putMetadata("type", request.paymentType().toString().toLowerCase())
+                            .putMetadata("plan", request.plan())
 
                             .build();
 
@@ -112,7 +114,7 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                     SessionCreateParams.builder()
                             .setMode(SessionCreateParams.Mode.PAYMENT)
 
-                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success")
+                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}")
                             .setCancelUrl("https://obsidian-delta-kohl.vercel.app/dashboard/subscription")
 
                             .addPaymentMethodType(

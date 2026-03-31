@@ -6,7 +6,9 @@ import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymen
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponseDTO;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatusResponse;
+import com.stripe.exception.StripeException;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Pageable;
 
@@ -26,5 +28,7 @@ public interface PaymentService {
     PageResponse<PaymentResponse> getPaymentHistory(Pageable pageable);
 
     Payment createSubscriptionRenewalPayment(Subscription subscription);
+
+    PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException;
 
 }

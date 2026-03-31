@@ -25,6 +25,8 @@ public record InitiatePaymentRequest(
         Currency currency,
 
         @Size(max = 255)
-        String description
+        String description,
+
+        String plan
 ) {
 }

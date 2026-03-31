@@ -6,14 +6,17 @@ import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymen
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.InitiatePaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponse;
+import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponseDTO;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatusResponse;
 import com.pm.librarymanagementsystem.service.PaymentService;
 import com.pm.librarymanagementsystem.service.UserService;
+import com.stripe.exception.StripeException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,5 +81,15 @@ public class PaymentController {
                 "Historial de pagos obtenido correctamente",
                 paymentService.getPaymentHistory(pageable)
         ));
+    }
+
+    @GetMapping("/success-details/{sessionId}")
+    public ResponseEntity<PaymentResponseDTO> getDetails(@PathVariable String sessionId) {
+        try {
+            PaymentResponseDTO details = paymentService.getPaymentDetails(sessionId);
+            return ResponseEntity.ok(details);
+        } catch (StripeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

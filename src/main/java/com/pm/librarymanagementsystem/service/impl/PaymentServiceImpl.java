@@ -20,6 +20,9 @@ import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
 import com.pm.librarymanagementsystem.service.UserService;
+import com.stripe.exception.StripeException;
+import com.stripe.model.AccountSession;
+import com.stripe.model.checkout.Session;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -30,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -42,7 +46,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentGatewayService paymentGatewayService;
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
-    private final UserService userService;
     private final FineRepository fineRepository;
 
     @Override
@@ -173,6 +176,45 @@ public class PaymentServiceImpl implements PaymentService {
 
         return paymentRepository.save(payment);
     }
+
+    @Override
+    public PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException {
+        Session session = Session.retrieve(sessionId);
+
+        Map<String, String> metadata = session.getMetadata();
+        String typeFromMeta = metadata.getOrDefault("type", "GENERAL");
+        String plan = metadata.getOrDefault("plan", "N/A");
+        String paymentId = metadata.getOrDefault("paymentId", "N/A");
+
+        PaymentType type;
+        try {
+            type = PaymentType.valueOf(typeFromMeta);
+        } catch (IllegalArgumentException e) {
+            type = PaymentType.MEMBERSHIP;
+        }
+
+        double amount = session.getAmountTotal() / 100.0;
+        String currency = session.getCurrency().toUpperCase();
+
+        String status = session.getPaymentStatus();
+
+        String description = "Procesando pago...";
+        if (!session.listLineItems().getData().isEmpty()) {
+            description = session.listLineItems().getData().get(0).getDescription();
+        }
+
+        return new PaymentResponseDTO(
+                amount,
+                currency,
+                status,
+                description,
+                paymentId,
+                session.getCustomerDetails().getEmail(),
+                type,
+                plan
+        );
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()

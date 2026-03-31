@@ -65,6 +65,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .amount(priceInDollars)
                 .currency(Currency.USD)
                 .description("Suscripción al plan: " + plan.getName())
+                .paymentType(PaymentType.MEMBERSHIP)
+                .plan(subscription.getPlanName())
                 .build();
 
         InitiatePaymentResponse paymentResponse = paymentService.initiatePayment(user.getId(), paymentReq);
