@@ -83,6 +83,7 @@ public class PaymentController {
         ));
     }
 
+    @CrossOrigin(origins = "https://obsidian-delta-kohl.vercel.app")
     @GetMapping("/success-details/{sessionId}")
     public ResponseEntity<PaymentResponseDTO> getDetails(@PathVariable String sessionId) {
         try {
