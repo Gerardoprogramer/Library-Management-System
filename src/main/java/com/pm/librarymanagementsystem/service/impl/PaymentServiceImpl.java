@@ -231,7 +231,9 @@ public class PaymentServiceImpl implements PaymentService {
             customerEmail = session.getCustomerDetails().getEmail();
         }
 
-        System.out.println("DEBUG: Construyendo DTO de respuesta para: " + customerEmail);
+        System.out.println("DEBUG: Construyendo DTO de respuesta para: " + amount + " " + currency
+                + " " + status + " " + description + " " + customerEmail + " " + type + " " + plan
+        );
 
         return new PaymentResponseDTO(
                 amount,
