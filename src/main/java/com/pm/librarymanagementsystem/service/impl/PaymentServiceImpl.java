@@ -182,17 +182,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException {
-        System.out.println("DEBUG: Consultando sesión en Stripe: " + sessionId);
-
-        // 1. Usamos retrieve con parámetros si necesitas expandir algo,
-        // pero para metadata básica el retrieve simple basta.
         Session session = Session.retrieve(sessionId);
-        System.out.println("DEBUG: Sesión recuperada de Stripe con éxito");
 
         Map<String, String> metadata = (session.getMetadata() != null) ? session.getMetadata() : new HashMap<>();
         String typeFromMeta = metadata.getOrDefault("type", "MEMBERSHIP");
         String plan = metadata.getOrDefault("plan", "Plan Estándar");
-        String paymentId = metadata.getOrDefault("paymentId", "N/A");
 
         PaymentType type;
         try {
@@ -201,19 +195,16 @@ public class PaymentServiceImpl implements PaymentService {
             type = PaymentType.MEMBERSHIP;
         }
 
-        // 2. Manejo seguro de montos (Stripe usa Long en céntimos)
         double amount = 0.0;
         if (session.getAmountTotal() != null) {
             amount = session.getAmountTotal() / 100.0;
         }
 
         String currency = (session.getCurrency() != null) ? session.getCurrency().toUpperCase() : "USD";
-        String status = session.getPaymentStatus(); // "paid", "unpaid", "no_export"
+        String status = session.getPaymentStatus();
 
-        // 3. SEGURO: Evitar error si los line_items no están incluidos en la respuesta
         String description = "Suscripción a Librería";
         try {
-            // Solo intentamos listar si la sesión tiene datos de línea
             if (session.getAmountTotal() != null) {
                 SessionListLineItemsParams listParams = SessionListLineItemsParams.builder().setLimit(1L).build();
                 var lineItems = session.listLineItems(listParams).getData();
@@ -225,15 +216,10 @@ public class PaymentServiceImpl implements PaymentService {
             System.out.println("Waning: No se pudieron recuperar los line items, usando descripción por defecto");
         }
 
-        // 4. SEGURO: El email puede ser nulo si el usuario no lo puso o hubo un error
         String customerEmail = "N/A";
         if (session.getCustomerDetails() != null && session.getCustomerDetails().getEmail() != null) {
             customerEmail = session.getCustomerDetails().getEmail();
         }
-
-        System.out.println("DEBUG: Construyendo DTO de respuesta para: " + amount + " " + currency
-                + " " + status + " " + description + " " + customerEmail + " " + type + " " + plan
-        );
 
         return new PaymentResponseDTO(
                 amount,
