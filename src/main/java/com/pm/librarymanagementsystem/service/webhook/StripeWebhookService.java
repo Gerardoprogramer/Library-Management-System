@@ -130,11 +130,11 @@ public class StripeWebhookService {
                 activateSubscription(s);
             }
 
-            emailService.sendSubscriptionEmail(
+/*            emailService.sendSubscriptionEmail(
                     payment.getUser().getEmail(),
                     payment.getUser().getFullName(),
                     s.getPlanName(),
-                    s.getEndDate());
+                    s.getEndDate());*/
         }else if(payable instanceof Fine f){
             CancelFine(f);
         }
