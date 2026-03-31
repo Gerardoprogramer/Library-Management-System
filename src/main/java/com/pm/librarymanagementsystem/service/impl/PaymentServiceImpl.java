@@ -23,6 +23,7 @@ import com.pm.librarymanagementsystem.service.UserService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.AccountSession;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionListLineItemsParams;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -181,30 +183,55 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException {
         System.out.println("DEBUG: Consultando sesión en Stripe: " + sessionId);
+
+        // 1. Usamos retrieve con parámetros si necesitas expandir algo,
+        // pero para metadata básica el retrieve simple basta.
         Session session = Session.retrieve(sessionId);
         System.out.println("DEBUG: Sesión recuperada de Stripe con éxito");
 
-        Map<String, String> metadata = session.getMetadata();
-        String typeFromMeta = metadata.getOrDefault("type", "GENERAL");
-        String plan = metadata.getOrDefault("plan", "N/A");
+        Map<String, String> metadata = (session.getMetadata() != null) ? session.getMetadata() : new HashMap<>();
+        String typeFromMeta = metadata.getOrDefault("type", "MEMBERSHIP");
+        String plan = metadata.getOrDefault("plan", "Plan Estándar");
         String paymentId = metadata.getOrDefault("paymentId", "N/A");
 
         PaymentType type;
         try {
             type = PaymentType.valueOf(typeFromMeta);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             type = PaymentType.MEMBERSHIP;
         }
 
-        double amount = session.getAmountTotal() / 100.0;
-        String currency = session.getCurrency().toUpperCase();
-
-        String status = session.getPaymentStatus();
-
-        String description = "Procesando pago...";
-        if (!session.listLineItems().getData().isEmpty()) {
-            description = session.listLineItems().getData().get(0).getDescription();
+        // 2. Manejo seguro de montos (Stripe usa Long en céntimos)
+        double amount = 0.0;
+        if (session.getAmountTotal() != null) {
+            amount = session.getAmountTotal() / 100.0;
         }
+
+        String currency = (session.getCurrency() != null) ? session.getCurrency().toUpperCase() : "USD";
+        String status = session.getPaymentStatus(); // "paid", "unpaid", "no_export"
+
+        // 3. SEGURO: Evitar error si los line_items no están incluidos en la respuesta
+        String description = "Suscripción a Librería";
+        try {
+            // Solo intentamos listar si la sesión tiene datos de línea
+            if (session.getAmountTotal() != null) {
+                SessionListLineItemsParams listParams = SessionListLineItemsParams.builder().setLimit(1L).build();
+                var lineItems = session.listLineItems(listParams).getData();
+                if (!lineItems.isEmpty()) {
+                    description = lineItems.get(0).getDescription();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Waning: No se pudieron recuperar los line items, usando descripción por defecto");
+        }
+
+        // 4. SEGURO: El email puede ser nulo si el usuario no lo puso o hubo un error
+        String customerEmail = "N/A";
+        if (session.getCustomerDetails() != null && session.getCustomerDetails().getEmail() != null) {
+            customerEmail = session.getCustomerDetails().getEmail();
+        }
+
+        System.out.println("DEBUG: Construyendo DTO de respuesta para: " + customerEmail);
 
         return new PaymentResponseDTO(
                 amount,
@@ -212,12 +239,11 @@ public class PaymentServiceImpl implements PaymentService {
                 status,
                 description,
                 paymentId,
-                session.getCustomerDetails().getEmail(),
+                customerEmail,
                 type,
                 plan
         );
     }
-
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()
