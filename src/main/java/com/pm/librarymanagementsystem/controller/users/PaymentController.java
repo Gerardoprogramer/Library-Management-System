@@ -88,7 +88,6 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponseDTO>> getDetails(@PathVariable String sessionId) {
         try {
             PaymentResponseDTO details = paymentService.getPaymentDetails(sessionId);
-            System.out.println(details.plan());
             return ResponseEntity.ok(ApiResponse.success(
                     "Se completo correctamente",
                     details

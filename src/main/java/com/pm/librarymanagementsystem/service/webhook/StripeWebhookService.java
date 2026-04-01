@@ -129,16 +129,14 @@ public class StripeWebhookService {
             } else {
                 activateSubscription(s);
             }
-            System.out.println("tercer sout");
-/*            emailService.sendSubscriptionEmail(
+                emailService.sendSubscriptionEmail(
                     payment.getUser().getEmail(),
                     payment.getUser().getFullName(),
                     s.getPlanName(),
-                    s.getEndDate());*/
+                    s.getEndDate());
         }else if(payable instanceof Fine f){
             CancelFine(f);
         }
-        System.out.println("cuarto sout");
         paymentRepository.save(payment);
 
     }
