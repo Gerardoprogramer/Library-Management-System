@@ -145,21 +145,25 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
-            @RequestBody ForgotPasswordRequest request) {
-
+            @RequestBody @Valid ForgotPasswordRequest request
+    ) {
         authService.createPasswordResetToken(request.email());
 
-        return ResponseEntity.ok(ApiResponse.success(
-                "Se ha enviado un enlace de restablecimiento a tu correo electrónico."));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Si existe una cuenta asociada a ese correo, se enviará un enlace de recuperación."
+                )
+        );
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
-            @RequestBody ResetPasswordRequest request) {
-
+            @RequestBody @Valid ResetPasswordRequest request
+    ) {
         authService.resetPassword(request.token(), request.password());
 
-        return ResponseEntity.ok(ApiResponse.success(
-                "Restablecimiento de contraseña realizado correctamente."));
+        return ResponseEntity.ok(
+                ApiResponse.success("Contraseña actualizada correctamente.")
+        );
     }
 }

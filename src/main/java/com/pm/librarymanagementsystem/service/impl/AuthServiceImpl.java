@@ -109,44 +109,65 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenService.deleteByToken(refreshToken);
     }
 
+    @Override
     @Transactional
     public void createPasswordResetToken(String email) {
 
-        User user = userRepository.findByEmail(email).orElseThrow( () ->
-                new NotFoundException("No se ha encontrado el usuario con el correo electrónico proporcionado.")
-        );
+        User user = userRepository.findByEmail(email)
+                .orElse(null);
+
+        if (user == null) {
+            return;
+        }
+
+        passwordResetTokenRepository.deleteByUser(user);
 
         String token = UUID.randomUUID().toString();
 
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .token(token)
                 .user(user)
-                .expiryDate(LocalDateTime.now().plusMinutes(5))
+                .expiryDate(LocalDateTime.now().plusMinutes(15))
                 .build();
 
         passwordResetTokenRepository.save(resetToken);
 
-        String reserLink = frontendUrl+token;
-        String subject = "Restablecimiento de contraseña";
-        String body = "Usa este enlace (válido por 15 minutos): " + reserLink;
+        String resetLink = frontendUrl + token;
 
-        emailService.sendPasswordResetEmail(user.getEmail(), subject, body);
+        String subject = "Restablecimiento de contraseña";
+
+        String body = "Usa este enlace para restablecer tu contraseña. "
+                + "El enlace es válido por 15 minutos: "
+                + resetLink;
+
+        emailService.sendPasswordResetEmail(
+                user.getEmail(),
+                subject,
+                body
+        );
     }
 
+    @Override
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(()-> new InvalidTokenException("Token inválido o expirado"));
 
-        if(resetToken.isExpired()){
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() ->
+                        new InvalidTokenException("Token inválido o expirado")
+                );
+
+        if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
             throw new InvalidTokenException("Token inválido o expirado");
         }
 
         User user = resetToken.getUser();
+
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        passwordResetTokenRepository.delete(resetToken);
+
+        refreshTokenRepository.deleteByUser(user);
+
+        passwordResetTokenRepository.deleteByUser(user);
     }
 
     @Override
