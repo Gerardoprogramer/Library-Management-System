@@ -36,17 +36,17 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("lax")
                 .maxAge(Duration.ofMinutes(15))
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("lax")
                 .maxAge(Duration.ofDays(7))
                 .build();
 
@@ -68,17 +68,17 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("lax")
                 .maxAge(Duration.ofMinutes(15))
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("lax")
                 .maxAge(Duration.ofDays(7))
                 .build();
 
@@ -102,14 +102,14 @@ public class AuthController {
 
         ResponseCookie clearAccess = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .build();
 
         ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -130,9 +130,9 @@ public class AuthController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtResponse.accessToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("lax")
                 .maxAge(Duration.ofMinutes(15))
                 .build();
 

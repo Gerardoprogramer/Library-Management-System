@@ -49,16 +49,19 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public JwtResponse login(LoginRequest request) {
-
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+
+        if (user.getPassword() == null ||
+                !passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BadCredentialsException("Credenciales inválidas");
+        }
 
         String accessToken = jwtProvider.generateAccessToken(user);
 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         user.setLastLogin(LocalDateTime.now());
-        userRepository.save(user);
 
         return new JwtResponse(
                 accessToken,

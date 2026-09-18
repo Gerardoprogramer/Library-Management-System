@@ -90,10 +90,12 @@ public class GlobalExceptionHandler {
        CREDENCIALES INVALIDAS
        =============================== */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<?> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
+            BadCredentialsException ex
+    ) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", ex.getMessage()));
+                .body(ApiResponse.error("Credenciales inválidas"));
     }
 
     /* ===============================
