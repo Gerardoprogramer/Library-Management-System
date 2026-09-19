@@ -1,6 +1,5 @@
 package com.pm.librarymanagementsystem.service;
 
-import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.ReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.SearchReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
@@ -11,21 +10,34 @@ import java.util.UUID;
 
 public interface ReservationService {
 
-    ReservationResponse createReservation(ReservationRequest request);
+    ReservationResponse createReservation(
+            ReservationRequest request
+    );
 
-    ReservationResponse createReservationForUser(UUID UserId, ReservationRequest request);
+    ReservationResponse createReservationForUser(
+            UUID userId,
+            ReservationRequest request
+    );
 
-    ReservationResponse cancelReservation(UUID reservationId);
+    ReservationResponse cancelReservation(
+            UUID reservationId
+    );
 
-    ReservationResponse fulfillReservation(UUID reservationId, Integer checkoutDays);
+    ReservationResponse fulfillReservation(
+            UUID reservationId,
+            Integer checkoutDays
+    );
 
-    PageResponse<ReservationResponse> searchReservations(UUID userId, SearchReservationRequest request, Pageable pageable);
+    PageResponse<ReservationResponse> searchReservations(
+            UUID userId,
+            SearchReservationRequest request,
+            Pageable pageable
+    );
 
-    PageResponse<ReservationResponse> getMyReservations(SearchReservationRequest request, Pageable pageable);
+    PageResponse<ReservationResponse> getMyReservations(
+            SearchReservationRequest request,
+            Pageable pageable
+    );
 
     Long positionUserForBook(UUID bookId);
-
-    void promoteNextReservations(Book book);
-
-    void expireAvailableReservations();
 }

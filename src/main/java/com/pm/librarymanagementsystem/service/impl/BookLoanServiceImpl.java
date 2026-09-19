@@ -8,6 +8,7 @@ import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookLoanMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.BookLoan;
+import com.pm.librarymanagementsystem.modal.Reservation;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckinRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckoutRequest;
@@ -91,81 +92,30 @@ public class BookLoanServiceImpl implements BookLoanService {
                 book.getAvailableCopies()
                         - reservedCopies;
 
-        if (!book.getActive()) {
-            throw new BusinessRuleException(
-                    "El libro no se encuentra activo"
-            );
-        }
-
         if (freelyAvailableCopies <= 0) {
             throw new BusinessRuleException(
                     "No hay copias disponibles fuera de las reservas activas"
             );
         }
 
-        if (bookLoanRepository.hasActiveCheckout(
+        validateCheckoutRules(
                 userId,
-                book.getId()
-        )) {
-            throw new BusinessRuleException(
-                    "El usuario ya tiene un préstamo activo de este libro"
-            );
-        }
-
-        long activeCheckouts =
-                bookLoanRepository
-                        .countActiveBookLoansByUser(userId);
-
-        if (activeCheckouts >= subscription.maxBooksAllowed()) {
-            throw new BusinessRuleException(
-                    "Has alcanzado el número máximo de libros permitido"
-            );
-        }
-
-        long overdueCount =
-                bookLoanRepository
-                        .countCurrentlyOverdueBookLoansByUser(
-                                userId,
-                                LocalDateTime.now()
-                        );
-
-        if (overdueCount > 0) {
-            throw new BusinessRuleException(
-                    "Debes devolver los préstamos vencidos antes de solicitar otro libro"
-            );
-        }
-
-        if (request.checkoutDays()
-                > subscription.maxDaysPerBook()) {
-
-            throw new BusinessRuleException(
-                    "El período solicitado supera el máximo permitido por tu suscripción"
-            );
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .user(user)
-                .book(book)
-                .type(BookLoanType.CHECKOUT)
-                .status(BookLoanStatus.CHECKED_OUT)
-                .checkoutDate(now)
-                .dueDate(
-                        now.plusDays(
-                                request.checkoutDays()
-                        )
-                )
-                .renewalCount(0)
-                .maxRenewals(2)
-                .notes(request.notes())
-                .overdue(false)
-                .overdueDays(0)
-                .build();
-
-        book.setAvailableCopies(
-                book.getAvailableCopies() - 1
+                book,
+                subscription,
+                request.checkoutDays()
         );
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        BookLoan bookLoan =
+                buildBookLoan(
+                        user,
+                        book,
+                        request.checkoutDays(),
+                        request.notes(),
+                        now
+                );
 
         BookLoan savedLoan =
                 bookLoanRepository.save(bookLoan);
@@ -324,10 +274,212 @@ public class BookLoanServiceImpl implements BookLoanService {
         return updateCount;
     }
 
+    @Transactional
+    @Override
+    public BookLoanResponse checkoutReservedBook(
+            UUID reservationId,
+            Integer checkoutDays
+    ) {
+        if (checkoutDays == null || checkoutDays < 1) {
+            throw new BusinessRuleException(
+                    "Los días de préstamo deben ser al menos 1"
+            );
+        }
+
+        Reservation snapshot = reservationRepository
+                .findById(reservationId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Reservación no encontrada"
+                        )
+                );
+
+        UUID userId =
+                snapshot.getUser().getId();
+
+        UUID bookId =
+                snapshot.getBook().getId();
+
+        User user = userRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Usuario no encontrado"
+                        )
+                );
+
+        SubscriptionResponse subscription =
+                subscriptionService
+                        .getActiveSubscriptionForUser(
+                                userId
+                        );
+
+        Book book = bookRepository
+                .findByIdForUpdate(bookId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Libro no encontrado"
+                        )
+                );
+
+        Reservation reservation = reservationRepository
+                .findByIdForUpdate(reservationId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Reservación no encontrada"
+                        )
+                );
+
+        if (reservation.getStatus()
+                != ReservationStatus.AVAILABLE) {
+
+            throw new BusinessRuleException(
+                    "La reserva todavía no está disponible para retiro"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (reservation.getAvailableUntil() != null
+                && now.isAfter(
+                reservation.getAvailableUntil()
+        )) {
+
+            throw new BusinessRuleException(
+                    "El período para retirar la reserva ha expirado"
+            );
+        }
+
+        if (!book.getActive()) {
+            throw new BusinessRuleException(
+                    "El libro no se encuentra activo"
+            );
+        }
+
+        if (book.getAvailableCopies() <= 0) {
+            throw new BusinessRuleException(
+                    "El libro no tiene copias disponibles"
+            );
+        }
+
+        validateCheckoutRules(
+                userId,
+                book,
+                subscription,
+                checkoutDays
+        );
+
+        BookLoan bookLoan = buildBookLoan(
+                user,
+                book,
+                checkoutDays,
+                "Préstamo generado desde una reserva",
+                now
+        );
+
+        book.setAvailableCopies(
+                book.getAvailableCopies() - 1
+        );
+
+        reservation.setStatus(
+                ReservationStatus.FULFILLED
+        );
+
+        reservation.setFulfilledAt(now);
+
+        BookLoan savedLoan =
+                bookLoanRepository.save(bookLoan);
+
+        reservationRepository.flush();
+
+        reservationQueueService
+                .promoteNextReservations(book);
+
+        return BookLoanMapper.toResponse(
+                savedLoan,
+                BigDecimal.ZERO
+        );
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
+    }
+
+    private void validateCheckoutRules(
+            UUID userId,
+            Book book,
+            SubscriptionResponse subscription,
+            Integer checkoutDays
+    ) {
+        if (bookLoanRepository.hasActiveCheckout(
+                userId,
+                book.getId()
+        )) {
+            throw new BusinessRuleException(
+                    "El usuario ya tiene un préstamo activo de este libro"
+            );
+        }
+
+        long activeCheckouts =
+                bookLoanRepository
+                        .countActiveBookLoansByUser(
+                                userId
+                        );
+
+        if (activeCheckouts
+                >= subscription.maxBooksAllowed()) {
+
+            throw new BusinessRuleException(
+                    "Has alcanzado el número máximo de libros permitido"
+            );
+        }
+
+        long overdueCount =
+                bookLoanRepository
+                        .countCurrentlyOverdueBookLoansByUser(
+                                userId,
+                                LocalDateTime.now()
+                        );
+
+        if (overdueCount > 0) {
+            throw new BusinessRuleException(
+                    "Debes devolver los préstamos vencidos antes de solicitar otro libro"
+            );
+        }
+
+        if (checkoutDays
+                > subscription.maxDaysPerBook()) {
+
+            throw new BusinessRuleException(
+                    "El período solicitado supera el máximo permitido por tu suscripción"
+            );
+        }
+    }
+
+    private BookLoan buildBookLoan(
+            User user,
+            Book book,
+            Integer checkoutDays,
+            String notes,
+            LocalDateTime now
+    ) {
+        return BookLoan.builder()
+                .user(user)
+                .book(book)
+                .type(BookLoanType.CHECKOUT)
+                .status(BookLoanStatus.CHECKED_OUT)
+                .checkoutDate(now)
+                .dueDate(
+                        now.plusDays(checkoutDays)
+                )
+                .renewalCount(0)
+                .maxRenewals(2)
+                .notes(notes)
+                .overdue(false)
+                .overdueDays(0)
+                .build();
     }
 }

@@ -24,5 +24,8 @@ public interface BookLoanService {
 
     int updateOverdueBookLoan();
 
-
+    BookLoanResponse checkoutReservedBook(
+            UUID reservationId,
+            Integer checkoutDays
+    );
 }

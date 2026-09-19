@@ -8,7 +8,6 @@ import com.pm.librarymanagementsystem.mapper.ReservationMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.Reservation;
 import com.pm.librarymanagementsystem.modal.User;
-import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckoutRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.ReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.SearchReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -44,7 +42,6 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationQueueService reservationQueueService;
 
     private static final int MAX_RESERVATIONS = 5;
-    private static final int RESERVATION_PICKUP_HOURS = 48;
 
     @Override
     @Transactional
@@ -146,6 +143,24 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationResponse cancelReservation(
             UUID reservationId
     ) {
+        Reservation snapshot = reservationRepository
+                .findById(reservationId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Reservación no encontrada"
+                        )
+                );
+
+        Book book = bookRepository
+                .findByIdForUpdate(
+                        snapshot.getBook().getId()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Libro no encontrado"
+                        )
+                );
+
         Reservation reservation = reservationRepository
                 .findByIdForUpdate(reservationId)
                 .orElseThrow(() ->
@@ -153,28 +168,6 @@ public class ReservationServiceImpl implements ReservationService {
                                 "Reservación no encontrada"
                         )
                 );
-
-        boolean wasAvailable =
-                reservation.getStatus()
-                        == ReservationStatus.AVAILABLE;
-
-        if (wasAvailable) {
-
-            Book book = bookRepository
-                    .findByIdForUpdate(
-                            reservation
-                                    .getBook()
-                                    .getId()
-                    )
-                    .orElseThrow(() ->
-                            new NotFoundException(
-                                    "Libro no encontrado"
-                            )
-                    );
-
-            reservationQueueService
-                    .promoteNextReservations(book);
-        }
 
         User user = userService.getCurrentUserEntity();
 
@@ -203,6 +196,11 @@ public class ReservationServiceImpl implements ReservationService {
                 LocalDateTime.now()
         );
 
+        reservationRepository.flush();
+
+        reservationQueueService
+                .promoteNextReservations(book);
+
         return ReservationMapper.toResponse(
                 reservation
         );
@@ -214,48 +212,27 @@ public class ReservationServiceImpl implements ReservationService {
             UUID reservationId,
             Integer checkoutDays
     ) {
-        Reservation reservation = reservationRepository
-                .findByIdForUpdate(reservationId)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Reservación no encontrada"
-                        )
-                );
+        if (checkoutDays == null
+                || checkoutDays < 1) {
 
-        if (reservation.getStatus() != ReservationStatus.PENDING
-                && reservation.getStatus() != ReservationStatus.AVAILABLE) {
-
-            throw new BusinessRuleException(
-                    "La reserva no puede completarse en estado "
-                            + reservation.getStatus()
-            );
-        }
-
-        if (checkoutDays == null || checkoutDays < 1) {
             throw new BusinessRuleException(
                     "Los días de préstamo deben ser al menos 1"
             );
         }
 
-        BookLoanCheckoutRequest checkoutRequest =
-                new BookLoanCheckoutRequest(
-                        reservation.getBook().getId(),
-                        checkoutDays,
-                        "Préstamo generado desde una reserva"
-                );
-
-        bookLoanService.checkoutBookForUser(
-                reservation.getUser().getId(),
-                checkoutRequest
+        bookLoanService.checkoutReservedBook(
+                reservationId,
+                checkoutDays
         );
 
-        reservation.setStatus(
-                ReservationStatus.FULFILLED
-        );
-
-        reservation.setFulfilledAt(
-                LocalDateTime.now()
-        );
+        Reservation reservation =
+                reservationRepository
+                        .findById(reservationId)
+                        .orElseThrow(() ->
+                                new NotFoundException(
+                                        "Reservación no encontrada"
+                                )
+                        );
 
         return ReservationMapper.toResponse(
                 reservation
@@ -295,63 +272,6 @@ public class ReservationServiceImpl implements ReservationService {
         return reservationRepository.countPendingReservationByBook(bookId);
     }
 
-    @Override
-    @Transactional
-    public void promoteNextReservations(Book book) {
-
-        long availableReservations =
-                reservationRepository.countByBookIdAndStatus(
-                        book.getId(),
-                        ReservationStatus.AVAILABLE
-                );
-
-        long freeCopies =
-                book.getAvailableCopies()
-                        - availableReservations;
-
-        while (freeCopies > 0) {
-
-            Reservation nextReservation =
-                    reservationRepository
-                            .findFirstByBookIdAndStatusOrderByReservedAtAsc(
-                                    book.getId(),
-                                    ReservationStatus.PENDING
-                            )
-                            .orElse(null);
-
-            if (nextReservation == null) {
-                break;
-            }
-
-            LocalDateTime now = LocalDateTime.now();
-
-            nextReservation.setStatus(
-                    ReservationStatus.AVAILABLE
-            );
-
-            nextReservation.setAvailableAt(now);
-
-            nextReservation.setAvailableUntil(
-                    now.plusHours(
-                            RESERVATION_PICKUP_HOURS
-                    )
-            );
-
-            nextReservation.setNotificationSent(false);
-
-            freeCopies--;
-        }
-
-        recalculateQueuePositions(
-                book.getId()
-        );
-    }
-
-    @Override
-    public void expireAvailableReservations() {
-
-    }
-
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()
@@ -359,22 +279,4 @@ public class ReservationServiceImpl implements ReservationService {
                 .getPrincipal();
     }
 
-    private void recalculateQueuePositions(
-            UUID bookId
-    ) {
-        List<Reservation> activeQueue =
-                reservationRepository.findActiveQueue(
-                        bookId,
-                        List.of(
-                                ReservationStatus.AVAILABLE,
-                                ReservationStatus.PENDING
-                        )
-                );
-
-        int position = 1;
-
-        for (Reservation reservation : activeQueue) {
-            reservation.setQueuePosition(position++);
-        }
-    }
 }
