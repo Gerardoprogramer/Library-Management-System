@@ -77,12 +77,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public SubscriptionResponse getUsersActiveSubscription() {
-
-        Subscription subscription = subscriptionRepository
-                .findActiveSubscriptionByUserId(getCurrentUserId(), LocalDateTime.now())
-                .orElseThrow(()-> new NotFoundException("No hay una suscripción activa"));
-
-        return SubscriptionMapper.toResponse(subscription);
+        return getActiveSubscriptionForUser(
+                getCurrentUserId()
+        );
     }
 
     @Override

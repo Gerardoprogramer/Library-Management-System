@@ -1,6 +1,5 @@
 package com.pm.librarymanagementsystem.service.impl;
 
-import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.domain.ReservationStatus;
 import com.pm.librarymanagementsystem.domain.UserRole;
 import com.pm.librarymanagementsystem.exception.BusinessRuleException;
@@ -17,6 +16,7 @@ import com.pm.librarymanagementsystem.payload.dto.response.reservation.Reservati
 import com.pm.librarymanagementsystem.repository.BookLoanRepository;
 import com.pm.librarymanagementsystem.repository.BookRepository;
 import com.pm.librarymanagementsystem.repository.ReservationRepository;
+import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.BookLoanService;
 import com.pm.librarymanagementsystem.service.ReservationService;
 import com.pm.librarymanagementsystem.service.UserService;
@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -37,97 +38,202 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
     private final BookLoanService bookLoanService;
+    private final UserRepository userRepository;
 
-    int MAX_RESERVATION = 5;
+    private static final int MAX_RESERVATIONS = 5;
 
     @Override
-    public ReservationResponse createReservation(ReservationRequest request) {
-
-        return createReservationForUser(getCurrentUserId(), request);
+    @Transactional
+    public ReservationResponse createReservation(
+            ReservationRequest request
+    ) {
+        return createReservationForUser(
+                getCurrentUserId(),
+                request
+        );
     }
 
     @Override
-    public ReservationResponse createReservationForUser(UUID UserId, ReservationRequest request) {
-        boolean alreadyHasLoan = bookLoanRepository
-                .existsByUserIdAndBookIdAndStatus(UserId, request.bookId(), BookLoanStatus.CHECKED_OUT);
-        if(alreadyHasLoan){
-            throw new BusinessRuleException("Ya tienes un préstamo sobre este libro");
+    @Transactional
+    public ReservationResponse createReservationForUser(
+            UUID userId,
+            ReservationRequest request
+    ) {
+        User user = userRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Usuario no encontrado"
+                        )
+                );
+
+        Book book = bookRepository
+                .findByIdForUpdate(request.bookId())
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Libro no encontrado"
+                        )
+                );
+
+        if (bookLoanRepository.hasActiveCheckout(
+                userId,
+                book.getId()
+        )) {
+            throw new BusinessRuleException(
+                    "Ya tienes un préstamo activo sobre este libro"
+            );
         }
-        User user = userService.findById(UserId);
 
-        Book book = bookRepository.findById(request.bookId()).orElseThrow(
-                ()-> new NotFoundException("Libro no encontrado")
-        );
-
-        if(reservationRepository.hasActiveReservation(user.getId(), book.getId())){
-            throw new BusinessRuleException("Ya tienes una reserva para este libro");
+        if (reservationRepository.hasActiveReservation(
+                userId,
+                book.getId()
+        )) {
+            throw new BusinessRuleException(
+                    "Ya tienes una reserva activa para este libro"
+            );
         }
 
-        if(book.getAvailableCopies() > 0){
-            throw new BusinessRuleException("El libro ya está disponible.");
+        if (book.getAvailableCopies() > 0) {
+            throw new BusinessRuleException(
+                    "El libro ya está disponible"
+            );
         }
 
-        long activeReservation = reservationRepository.countActiveReservationsByUser(user.getId());
+        long activeReservations =
+                reservationRepository
+                        .countActiveReservationsByUser(userId);
 
-        if(activeReservation > MAX_RESERVATION){
-            throw new BusinessRuleException("Has reservado "+ MAX_RESERVATION + " veces");
+        if (activeReservations >= MAX_RESERVATIONS) {
+            throw new BusinessRuleException(
+                    "Has alcanzado el máximo de "
+                            + MAX_RESERVATIONS
+                            + " reservas activas"
+            );
         }
 
-        long pendingCount = reservationRepository.countPendingReservationByBook(book.getId());
+        long pendingCount =
+                reservationRepository
+                        .countPendingReservationByBook(
+                                book.getId()
+                        );
 
         Reservation reservation = new Reservation();
+
         reservation.setUser(user);
         reservation.setBook(book);
         reservation.setStatus(ReservationStatus.PENDING);
         reservation.setReservedAt(LocalDateTime.now());
         reservation.setNotificationSent(false);
         reservation.setNotes(request.notes());
-        reservation.setQueuePosition((int)pendingCount + 1);
+        reservation.setQueuePosition(
+                Math.toIntExact(pendingCount + 1)
+        );
 
-        return ReservationMapper.toResponse(reservationRepository.save(reservation));
+        Reservation savedReservation =
+                reservationRepository.save(reservation);
+
+        return ReservationMapper.toResponse(
+                savedReservation
+        );
     }
 
+    @Transactional
     @Override
-    public ReservationResponse cancelReservation(UUID reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(
-                ()-> new NotFoundException("Reservación no encontrada"));
+    public ReservationResponse cancelReservation(
+            UUID reservationId
+    ) {
+        Reservation reservation = reservationRepository
+                .findByIdForUpdate(reservationId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Reservación no encontrada"
+                        )
+                );
 
         User user = userService.getCurrentUserEntity();
 
-        if(!reservation.getUser().getId().equals(user.getId()) && user.getRole() != UserRole.ROLE_ADMIN){
-            throw new BusinessRuleException("Solo puedes cancelar tu propia reserva");
-        }
-        if(!reservation.canBeCancelled()){
-            throw new BusinessRuleException("La reserva no se puede cancelar (estado actual "+reservation.getStatus()+")");
-        }
+        if (!reservation.getUser()
+                .getId()
+                .equals(user.getId())
+                && user.getRole() != UserRole.ROLE_ADMIN) {
 
-        reservation.setStatus(ReservationStatus.CANCELLED);
-        reservation.setCancelledAt(LocalDateTime.now());
-
-        return ReservationMapper.toResponse(reservationRepository.save(reservation));
-    }
-
-    @Override
-    public ReservationResponse fulfillReservation(UUID reservationId, Integer checkoutDays) {
-        Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(
-                ()-> new NotFoundException("Reservación no encontrada"));
-
-        if(reservation.getBook().getAvailableCopies() <= 0) {
-            throw new BusinessRuleException("No se pueden hacer reservas para recoger (estado actual "+reservation.getStatus()+")");
+            throw new BusinessRuleException(
+                    "Solo puedes cancelar tu propia reserva"
+            );
         }
 
-        reservation.setStatus(ReservationStatus.FULFILLED);
-        reservation.setFulfilledAt(LocalDateTime.now());
+        if (!reservation.canBeCancelled()) {
+            throw new BusinessRuleException(
+                    "La reserva no se puede cancelar en estado "
+                            + reservation.getStatus()
+            );
+        }
 
-        BookLoanCheckoutRequest request = new BookLoanCheckoutRequest(
-                reservation.getBook().getId(),
-                checkoutDays,
-                "Reserva realizada por el administrador"
+        reservation.setStatus(
+                ReservationStatus.CANCELLED
         );
 
-        bookLoanService.checkoutBookForUser(reservation.getUser().getId(),request);
+        reservation.setCancelledAt(
+                LocalDateTime.now()
+        );
 
-        return ReservationMapper.toResponse(reservationRepository.save(reservation));
+        return ReservationMapper.toResponse(
+                reservation
+        );
+    }
+
+    @Transactional
+    @Override
+    public ReservationResponse fulfillReservation(
+            UUID reservationId,
+            Integer checkoutDays
+    ) {
+        Reservation reservation = reservationRepository
+                .findByIdForUpdate(reservationId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Reservación no encontrada"
+                        )
+                );
+
+        if (reservation.getStatus() != ReservationStatus.PENDING
+                && reservation.getStatus() != ReservationStatus.AVAILABLE) {
+
+            throw new BusinessRuleException(
+                    "La reserva no puede completarse en estado "
+                            + reservation.getStatus()
+            );
+        }
+
+        if (checkoutDays == null || checkoutDays < 1) {
+            throw new BusinessRuleException(
+                    "Los días de préstamo deben ser al menos 1"
+            );
+        }
+
+        BookLoanCheckoutRequest checkoutRequest =
+                new BookLoanCheckoutRequest(
+                        reservation.getBook().getId(),
+                        checkoutDays,
+                        "Préstamo generado desde una reserva"
+                );
+
+        bookLoanService.checkoutBookForUser(
+                reservation.getUser().getId(),
+                checkoutRequest
+        );
+
+        reservation.setStatus(
+                ReservationStatus.FULFILLED
+        );
+
+        reservation.setFulfilledAt(
+                LocalDateTime.now()
+        );
+
+        return ReservationMapper.toResponse(
+                reservation
+        );
     }
 
     @Override
