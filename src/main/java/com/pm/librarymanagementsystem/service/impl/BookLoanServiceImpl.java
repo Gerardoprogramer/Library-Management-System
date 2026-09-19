@@ -2,6 +2,7 @@ package com.pm.librarymanagementsystem.service.impl;
 
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.domain.BookLoanType;
+import com.pm.librarymanagementsystem.domain.ReservationStatus;
 import com.pm.librarymanagementsystem.exception.BusinessRuleException;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookLoanMapper;
@@ -17,8 +18,10 @@ import com.pm.librarymanagementsystem.payload.dto.response.Subscription.Subscrip
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 import com.pm.librarymanagementsystem.repository.BookLoanRepository;
 import com.pm.librarymanagementsystem.repository.BookRepository;
+import com.pm.librarymanagementsystem.repository.ReservationRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.BookLoanService;
+import com.pm.librarymanagementsystem.service.ReservationQueueService;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +44,8 @@ public class BookLoanServiceImpl implements BookLoanService {
     private final SubscriptionService subscriptionService;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final ReservationQueueService reservationQueueService;
+    private final ReservationRepository reservationRepository;
 
     @Override
     public void checkoutBook(BookLoanCheckoutRequest request) {
@@ -53,10 +58,7 @@ public class BookLoanServiceImpl implements BookLoanService {
             UUID userId,
             BookLoanCheckoutRequest request
     ) {
-        /*
-         * Primero bloqueamos al usuario.
-         * Esto serializa checkouts concurrentes del mismo usuario.
-         */
+
         User user = userRepository
                 .findByIdForUpdate(userId)
                 .orElseThrow(() ->
@@ -69,10 +71,7 @@ public class BookLoanServiceImpl implements BookLoanService {
                 subscriptionService
                         .getActiveSubscriptionForUser(userId);
 
-        /*
-         * Después bloqueamos el libro.
-         * Así availableCopies no puede sufrir lost updates.
-         */
+
         Book book = bookRepository
                 .findByIdForUpdate(request.bookId())
                 .orElseThrow(() ->
@@ -81,15 +80,26 @@ public class BookLoanServiceImpl implements BookLoanService {
                         )
                 );
 
+        long reservedCopies =
+                reservationRepository
+                        .countByBookIdAndStatus(
+                                book.getId(),
+                                ReservationStatus.AVAILABLE
+                        );
+
+        long freelyAvailableCopies =
+                book.getAvailableCopies()
+                        - reservedCopies;
+
         if (!book.getActive()) {
             throw new BusinessRuleException(
                     "El libro no se encuentra activo"
             );
         }
 
-        if (book.getAvailableCopies() <= 0) {
+        if (freelyAvailableCopies <= 0) {
             throw new BusinessRuleException(
-                    "El libro no está disponible"
+                    "No hay copias disponibles fuera de las reservas activas"
             );
         }
 
@@ -207,9 +217,13 @@ public class BookLoanServiceImpl implements BookLoanService {
         bookLoan.setNotes(request.notes());
 
         if (condition != BookLoanStatus.LOST) {
+
             book.setAvailableCopies(
                     book.getAvailableCopies() + 1
             );
+
+            reservationQueueService
+                    .promoteNextReservations(book);
         }
 
         return BookLoanMapper.toResponse(

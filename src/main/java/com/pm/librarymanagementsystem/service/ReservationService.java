@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service;
 
+import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.ReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.reservation.SearchReservationRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
@@ -23,4 +24,8 @@ public interface ReservationService {
     PageResponse<ReservationResponse> getMyReservations(SearchReservationRequest request, Pageable pageable);
 
     Long positionUserForBook(UUID bookId);
+
+    void promoteNextReservations(Book book);
+
+    void expireAvailableReservations();
 }

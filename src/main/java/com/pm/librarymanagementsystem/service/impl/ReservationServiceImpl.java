@@ -18,6 +18,7 @@ import com.pm.librarymanagementsystem.repository.BookRepository;
 import com.pm.librarymanagementsystem.repository.ReservationRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.BookLoanService;
+import com.pm.librarymanagementsystem.service.ReservationQueueService;
 import com.pm.librarymanagementsystem.service.ReservationService;
 import com.pm.librarymanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,8 +41,10 @@ public class ReservationServiceImpl implements ReservationService {
     private final BookRepository bookRepository;
     private final BookLoanService bookLoanService;
     private final UserRepository userRepository;
+    private final ReservationQueueService reservationQueueService;
 
     private static final int MAX_RESERVATIONS = 5;
+    private static final int RESERVATION_PICKUP_HOURS = 48;
 
     @Override
     @Transactional
@@ -149,6 +153,28 @@ public class ReservationServiceImpl implements ReservationService {
                                 "Reservación no encontrada"
                         )
                 );
+
+        boolean wasAvailable =
+                reservation.getStatus()
+                        == ReservationStatus.AVAILABLE;
+
+        if (wasAvailable) {
+
+            Book book = bookRepository
+                    .findByIdForUpdate(
+                            reservation
+                                    .getBook()
+                                    .getId()
+                    )
+                    .orElseThrow(() ->
+                            new NotFoundException(
+                                    "Libro no encontrado"
+                            )
+                    );
+
+            reservationQueueService
+                    .promoteNextReservations(book);
+        }
 
         User user = userService.getCurrentUserEntity();
 
@@ -269,10 +295,86 @@ public class ReservationServiceImpl implements ReservationService {
         return reservationRepository.countPendingReservationByBook(bookId);
     }
 
+    @Override
+    @Transactional
+    public void promoteNextReservations(Book book) {
+
+        long availableReservations =
+                reservationRepository.countByBookIdAndStatus(
+                        book.getId(),
+                        ReservationStatus.AVAILABLE
+                );
+
+        long freeCopies =
+                book.getAvailableCopies()
+                        - availableReservations;
+
+        while (freeCopies > 0) {
+
+            Reservation nextReservation =
+                    reservationRepository
+                            .findFirstByBookIdAndStatusOrderByReservedAtAsc(
+                                    book.getId(),
+                                    ReservationStatus.PENDING
+                            )
+                            .orElse(null);
+
+            if (nextReservation == null) {
+                break;
+            }
+
+            LocalDateTime now = LocalDateTime.now();
+
+            nextReservation.setStatus(
+                    ReservationStatus.AVAILABLE
+            );
+
+            nextReservation.setAvailableAt(now);
+
+            nextReservation.setAvailableUntil(
+                    now.plusHours(
+                            RESERVATION_PICKUP_HOURS
+                    )
+            );
+
+            nextReservation.setNotificationSent(false);
+
+            freeCopies--;
+        }
+
+        recalculateQueuePositions(
+                book.getId()
+        );
+    }
+
+    @Override
+    public void expireAvailableReservations() {
+
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
+    }
+
+    private void recalculateQueuePositions(
+            UUID bookId
+    ) {
+        List<Reservation> activeQueue =
+                reservationRepository.findActiveQueue(
+                        bookId,
+                        List.of(
+                                ReservationStatus.AVAILABLE,
+                                ReservationStatus.PENDING
+                        )
+                );
+
+        int position = 1;
+
+        for (Reservation reservation : activeQueue) {
+            reservation.setQueuePosition(position++);
+        }
     }
 }

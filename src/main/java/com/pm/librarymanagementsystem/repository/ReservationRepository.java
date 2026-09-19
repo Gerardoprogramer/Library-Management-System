@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -86,5 +88,38 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
         """)
     Optional<Reservation> findByIdForUpdate(
             @Param("reservationId") UUID reservationId
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Reservation> findFirstByBookIdAndStatusOrderByReservedAtAsc(
+            UUID bookId,
+            ReservationStatus status
+    );
+
+    long countByBookIdAndStatus(
+            UUID bookId,
+            ReservationStatus status
+    );
+
+    Optional<Reservation> findByIdAndUserId(
+            UUID reservationId,
+            UUID userId
+    );
+
+    List<Reservation> findByStatusAndAvailableUntilBefore(
+            ReservationStatus status,
+            LocalDateTime now
+    );
+
+    @Query("""
+        select r
+        from Reservation r
+        where r.book.id = :bookId
+        and r.status in :statuses
+        order by r.reservedAt asc
+        """)
+    List<Reservation> findActiveQueue(
+            @Param("bookId") UUID bookId,
+            @Param("statuses") List<ReservationStatus> statuses
     );
 }
