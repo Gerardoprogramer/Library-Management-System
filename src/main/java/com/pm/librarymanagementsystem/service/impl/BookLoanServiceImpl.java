@@ -81,6 +81,12 @@ public class BookLoanServiceImpl implements BookLoanService {
                         )
                 );
 
+        if (!book.getActive()) {
+            throw new BusinessRuleException(
+                    "El libro no se encuentra activo"
+            );
+        }
+
         long reservedCopies =
                 reservationRepository
                         .countByBookIdAndStatus(
@@ -105,8 +111,7 @@ public class BookLoanServiceImpl implements BookLoanService {
                 request.checkoutDays()
         );
 
-        LocalDateTime now =
-                LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         BookLoan bookLoan =
                 buildBookLoan(
@@ -116,6 +121,10 @@ public class BookLoanServiceImpl implements BookLoanService {
                         request.notes(),
                         now
                 );
+
+        book.setAvailableCopies(
+                book.getAvailableCopies() - 1
+        );
 
         BookLoan savedLoan =
                 bookLoanRepository.save(bookLoan);
