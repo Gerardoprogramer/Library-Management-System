@@ -135,6 +135,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
+    @Override
+    public SubscriptionResponse getActiveSubscriptionForUser(
+            UUID userId
+    ) {
+        Subscription subscription = subscriptionRepository
+                .findActiveSubscriptionByUserId(
+                        userId,
+                        LocalDateTime.now()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "No hay una suscripción activa"
+                        )
+                );
+
+        return SubscriptionMapper.toResponse(subscription);
+    }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()

@@ -7,7 +7,6 @@ import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.BookLoanMapper;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.BookLoan;
-import com.pm.librarymanagementsystem.modal.Fine;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckinRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoanCheckoutRequest;
@@ -18,10 +17,9 @@ import com.pm.librarymanagementsystem.payload.dto.response.Subscription.Subscrip
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
 import com.pm.librarymanagementsystem.repository.BookLoanRepository;
 import com.pm.librarymanagementsystem.repository.BookRepository;
-import com.pm.librarymanagementsystem.repository.FineRepository;
+import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.BookLoanService;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
-import com.pm.librarymanagementsystem.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,10 +38,9 @@ import java.util.UUID;
 public class BookLoanServiceImpl implements BookLoanService {
 
     private final BookLoanRepository bookLoanRepository;
-    private final UserService userService;
     private final SubscriptionService subscriptionService;
     private final BookRepository bookRepository;
-    private final FineRepository fineRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void checkoutBook(BookLoanCheckoutRequest request) {
@@ -52,99 +49,186 @@ public class BookLoanServiceImpl implements BookLoanService {
 
     @Transactional
     @Override
-    public BookLoanResponse checkoutBookForUser(UUID userId, BookLoanCheckoutRequest request) {
-        User user = userService.findById(userId);
+    public BookLoanResponse checkoutBookForUser(
+            UUID userId,
+            BookLoanCheckoutRequest request
+    ) {
+        /*
+         * Primero bloqueamos al usuario.
+         * Esto serializa checkouts concurrentes del mismo usuario.
+         */
+        User user = userRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Usuario no encontrado"
+                        )
+                );
 
-        SubscriptionResponse subscription = subscriptionService.getUsersActiveSubscription();
-        Book book = bookRepository.findById(request.bookId()).orElseThrow(
-                ()-> new NotFoundException("No se encontro el Libro")
-        );
+        SubscriptionResponse subscription =
+                subscriptionService
+                        .getActiveSubscriptionForUser(userId);
 
-        if(!book.getActive()){
-            throw new BusinessRuleException("El libro no se encuentra activo");
+        /*
+         * Después bloqueamos el libro.
+         * Así availableCopies no puede sufrir lost updates.
+         */
+        Book book = bookRepository
+                .findByIdForUpdate(request.bookId())
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Libro no encontrado"
+                        )
+                );
+
+        if (!book.getActive()) {
+            throw new BusinessRuleException(
+                    "El libro no se encuentra activo"
+            );
         }
 
-        if(book.getAvailableCopies() <= 0){
-            throw new BusinessRuleException("El libro no está disponible.");
+        if (book.getAvailableCopies() <= 0) {
+            throw new BusinessRuleException(
+                    "El libro no está disponible"
+            );
         }
 
-        if(bookLoanRepository.hasActiveCheckout(user.getId(), book.getId())){
-            throw new BusinessRuleException("El libro ya tiene un proceso de pago activo.");
+        if (bookLoanRepository.hasActiveCheckout(
+                userId,
+                book.getId()
+        )) {
+            throw new BusinessRuleException(
+                    "El usuario ya tiene un préstamo activo de este libro"
+            );
         }
 
-        Long activeCheckouts = bookLoanRepository.countActiveBookLoansByUser(user.getId());
+        long activeCheckouts =
+                bookLoanRepository
+                        .countActiveBookLoansByUser(userId);
 
-        int maxBookAllowed = subscription.maxBooksAllowed();
-        if(activeCheckouts >= maxBookAllowed){
-            throw new BusinessRuleException("Has alcanzado el número máximo de libros permitido.");
+        if (activeCheckouts >= subscription.maxBooksAllowed()) {
+            throw new BusinessRuleException(
+                    "Has alcanzado el número máximo de libros permitido"
+            );
         }
 
-        long overdueCount = bookLoanRepository.countOverdueBookLoansByUser(user.getId());
+        long overdueCount =
+                bookLoanRepository
+                        .countCurrentlyOverdueBookLoansByUser(
+                                userId,
+                                LocalDateTime.now()
+                        );
 
-        if(overdueCount > 0){
-            throw new BusinessRuleException("Primero devuelve el libro viejo.");
+        if (overdueCount > 0) {
+            throw new BusinessRuleException(
+                    "Debes devolver los préstamos vencidos antes de solicitar otro libro"
+            );
         }
 
-        BookLoan bookLoan = BookLoan
-                .builder()
+        if (request.checkoutDays()
+                > subscription.maxDaysPerBook()) {
+
+            throw new BusinessRuleException(
+                    "El período solicitado supera el máximo permitido por tu suscripción"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        BookLoan bookLoan = BookLoan.builder()
                 .user(user)
                 .book(book)
                 .type(BookLoanType.CHECKOUT)
                 .status(BookLoanStatus.CHECKED_OUT)
-                .checkoutDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusDays(request.checkoutDays()))
+                .checkoutDate(now)
+                .dueDate(
+                        now.plusDays(
+                                request.checkoutDays()
+                        )
+                )
                 .renewalCount(0)
-                // despues hacer configurable no Hardcode
                 .maxRenewals(2)
                 .notes(request.notes())
                 .overdue(false)
                 .overdueDays(0)
                 .build();
 
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        bookRepository.save(book);
+        book.setAvailableCopies(
+                book.getAvailableCopies() - 1
+        );
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
+        BookLoan savedLoan =
+                bookLoanRepository.save(bookLoan);
+
+        return BookLoanMapper.toResponse(
+                savedLoan,
+                BigDecimal.ZERO
+        );
     }
 
     @Transactional
     @Override
-    public BookLoanResponse checkinBook(BookLoanCheckinRequest request) {
+    public BookLoanResponse checkinBook(
+            BookLoanCheckinRequest request
+    ) {
+        BookLoan bookLoan = bookLoanRepository
+                .findByIdForUpdate(request.loanId())
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Préstamo de libro no encontrado"
+                        )
+                );
 
-        BookLoan bookLoan = bookLoanRepository.findById(request.loanId())
-                .orElseThrow(()-> new NotFoundException("Préstamo de libro no encontrado"));
-
-        if(!bookLoan.isActive()){
-            throw new BusinessRuleException("El préstamo del libro no está activo.");
+        if (!bookLoan.isActive()) {
+            throw new BusinessRuleException(
+                    "El préstamo del libro no está activo"
+            );
         }
+
+        Book book = bookRepository
+                .findByIdForUpdate(
+                        bookLoan.getBook().getId()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Libro no encontrado"
+                        )
+                );
+
+        BookLoanStatus condition =
+                request.status() != null
+                        ? request.status()
+                        : BookLoanStatus.RETURNED;
 
         bookLoan.setReturnDate(LocalDateTime.now());
-
-        BookLoanStatus condition = request.status();
-
-        if(condition == null){
-            condition = BookLoanStatus.RETURNED;
-        }
         bookLoan.setStatus(condition);
         bookLoan.setOverdueDays(0);
         bookLoan.setOverdue(false);
         bookLoan.setNotes(request.notes());
 
-        if(condition != BookLoanStatus.LOST){
-            Book book = bookLoan.getBook();
-            book.setAvailableCopies(book.getAvailableCopies() + 1);
-            bookRepository.save(book);
+        if (condition != BookLoanStatus.LOST) {
+            book.setAvailableCopies(
+                    book.getAvailableCopies() + 1
+            );
         }
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
+        return BookLoanMapper.toResponse(
+                bookLoan,
+                BigDecimal.ZERO
+        );
     }
 
     @Transactional
     @Override
     public BookLoanResponse renewCheckout(BookLoanRenewalRequest request) {
 
-        BookLoan bookLoan = bookLoanRepository.findById(request.loanId())
-                .orElseThrow(()-> new NotFoundException("Préstamo de libro no encontrado"));
+        BookLoan bookLoan = bookLoanRepository
+                .findByIdForUpdate(request.loanId())
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Préstamo de libro no encontrado"
+                        )
+                );
 
         if(!bookLoan.canRenew()){
             throw new BusinessRuleException("El libro no se puede renovar");

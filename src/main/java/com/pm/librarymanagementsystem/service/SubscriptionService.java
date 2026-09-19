@@ -22,4 +22,6 @@ public interface SubscriptionService {
     PageResponse<SubscriptionResponse> getAllSubscriptions(Pageable pageable);
 
     void deactivateExpiredSubscriptions();
+
+    SubscriptionResponse getActiveSubscriptionForUser(UUID userId);
 }

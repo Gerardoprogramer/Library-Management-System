@@ -2,18 +2,18 @@ package com.pm.librarymanagementsystem.repository;
 
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.modal.BookLoan;
-import com.pm.librarymanagementsystem.modal.User;
-import com.pm.librarymanagementsystem.payload.dto.request.bookLoan.BookLoansSearchRequest;
-import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.bookLoan.BookLoanResponse;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
@@ -96,5 +96,30 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select bl
+        from BookLoan bl
+        where bl.id = :loanId
+        """)
+    Optional<BookLoan> findByIdForUpdate(
+            @Param("loanId") UUID loanId
+    );
+
+    @Query("""
+        select count(bl)
+        from BookLoan bl
+        where bl.user.id = :userId
+        and bl.dueDate < :now
+        and (
+            bl.status = 'CHECKED_OUT'
+            or bl.status = 'OVERDUE'
+        )
+        """)
+    long countCurrentlyOverdueBookLoansByUser(
+            @Param("userId") UUID userId,
+            @Param("now") LocalDateTime now
     );
 }

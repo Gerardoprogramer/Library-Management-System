@@ -16,7 +16,6 @@ import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
