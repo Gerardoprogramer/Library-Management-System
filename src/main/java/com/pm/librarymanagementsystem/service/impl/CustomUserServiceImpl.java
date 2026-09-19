@@ -2,6 +2,7 @@ package com.pm.librarymanagementsystem.service.impl;
 
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.repository.UserRepository;
+import com.pm.librarymanagementsystem.util.EmailNormalizer;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,9 +25,12 @@ public class CustomUserServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) {
 
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = EmailNormalizer.normalize(email);
+
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() ->
-                        new BadCredentialsException("Credenciales inválidas"));
+                        new BadCredentialsException("Credenciales inválidas")
+                );
 
         GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(user.getRole().toString());
 

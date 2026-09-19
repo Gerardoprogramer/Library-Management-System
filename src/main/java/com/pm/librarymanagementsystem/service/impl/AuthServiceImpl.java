@@ -15,6 +15,7 @@ import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.AuthService;
 import com.pm.librarymanagementsystem.service.EmailService;
 import com.pm.librarymanagementsystem.service.RefreshTokenService;
+import com.pm.librarymanagementsystem.util.EmailNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,8 +48,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public JwtResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+        String email = EmailNormalizer.normalize(request.email());
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new BadCredentialsException("Credenciales inválidas")
+                );
 
         if (user.getPassword() == null ||
                 !passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -72,12 +77,19 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public JwtResponse signup(RegisterRequest request) {
 
-        userRepository.findByEmail(request.email())
+        String email = EmailNormalizer.normalize(request.email());
+
+        userRepository.findByEmail(email)
                 .ifPresent(usr -> {
                     throw new ConflictException("El correo ya está registrado");
                 });
 
-        User user = UserMapper.toRegister(request, passwordEncoder.encode(request.password()));
+        User user = UserMapper.toRegister(
+                request,
+                passwordEncoder.encode(request.password()),
+                email
+        );
+
         user = userRepository.save(user);
 
         UserDetails userDetails = customUserServiceImpl.loadUserByUsername(user.getEmail());
@@ -111,7 +123,9 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void createPasswordResetToken(String email) {
 
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = EmailNormalizer.normalize(email);
+
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElse(null);
 
         if (user == null) {

@@ -4,6 +4,7 @@ import com.pm.librarymanagementsystem.domain.AuthProvider;
 import com.pm.librarymanagementsystem.domain.UserRole;
 import com.pm.librarymanagementsystem.modal.User;
 import com.pm.librarymanagementsystem.repository.UserRepository;
+import com.pm.librarymanagementsystem.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -28,13 +29,15 @@ public class DataInitializationComponents implements CommandLineRunner {
         initializeAdminUser();
     }
 
-    private void initializeAdminUser(){
+    private void initializeAdminUser() {
 
-        if(userRepository.findByEmail(adminEmail).isEmpty()){
+        String normalizedEmail = EmailNormalizer.normalize(adminEmail);
+
+        if (userRepository.findByEmail(normalizedEmail).isEmpty()) {
 
             User user = User.builder()
                     .password(passwordEncoder.encode(adminPassword))
-                    .email(adminEmail)
+                    .email(normalizedEmail)
                     .fullName("Obsidian Admin")
                     .role(UserRole.ROLE_ADMIN)
                     .authProvider(AuthProvider.LOCAL)

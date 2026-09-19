@@ -14,10 +14,15 @@ public class UserMapper {
     /* =======================
        DTO → ENTITY
        ======================= */
-    public static User toRegister(RegisterRequest request, String passwordEncoder){
+    public static User toRegister(
+            RegisterRequest request,
+            String encodedPassword,
+            String normalizedEmail
+    ) {
         User user = new User();
-        user.setEmail(request.email());
-        user.setPassword(passwordEncoder);
+
+        user.setEmail(normalizedEmail);
+        user.setPassword(encodedPassword);
         user.setFullName(request.fullName());
         user.setLastLogin(LocalDateTime.now());
         user.setRole(UserRole.ROLE_USER);
