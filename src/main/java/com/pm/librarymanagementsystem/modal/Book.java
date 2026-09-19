@@ -46,6 +46,7 @@ public class Book {
 
     private Integer pages;
 
+    @Column(length = 500)
     private String description;
 
     @Column(nullable = false)

@@ -34,6 +34,7 @@ public class Fine extends Payable{
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Currency currency;
 
     @Enumerated(EnumType.STRING)

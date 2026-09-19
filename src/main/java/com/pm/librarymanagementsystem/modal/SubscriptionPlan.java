@@ -40,6 +40,7 @@ public class SubscriptionPlan {
     private Long price;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Currency currency;
 
     @Column(nullable = false)
@@ -58,6 +59,7 @@ public class SubscriptionPlan {
 
     private String badgeText;
 
+    @Column(length = 500)
     private String adminNotes;
 
     @CreationTimestamp

@@ -40,7 +40,7 @@ public class BookReview {
     @Column(nullable = false)
     private Integer rating;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String reviewText;
 
     private String title;
