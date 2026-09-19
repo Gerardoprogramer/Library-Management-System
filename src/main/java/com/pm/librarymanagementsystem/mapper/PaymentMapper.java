@@ -28,12 +28,14 @@ public class PaymentMapper {
                 payment.getCheckoutSessionId(),
                 payment.getPaymentIntentId(),
                 payment.getChargeId(),
+                payment.getRefundId(),
 
                 payment.getDescription(),
                 payment.getFailureReason(),
 
                 payment.getInitiatedAt(),
                 payment.getCompletedAt(),
+                payment.getRefundedAt(),
 
                 payment.getCreatedAt(),
                 payment.getUpdatedAt()

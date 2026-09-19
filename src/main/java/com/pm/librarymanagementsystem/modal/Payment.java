@@ -72,6 +72,9 @@ public class Payment {
     @Column(unique = true)
     private String chargeId;
 
+    @Column(unique = true)
+    private String refundId;
+
     private String description;
 
     private String failureReason;
@@ -81,6 +84,8 @@ public class Payment {
     private LocalDateTime initiatedAt;
 
     private LocalDateTime completedAt;
+
+    private LocalDateTime refundedAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

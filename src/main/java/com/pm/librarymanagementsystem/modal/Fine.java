@@ -77,4 +77,16 @@ public class Fine extends Payable{
         this.waivedAt = LocalDateTime.now();
         this.waiverReason = reason;
     }
+
+    public void reopenAfterRefund() {
+        if (this.status != FineStatus.PAID) {
+            throw new IllegalStateException(
+                    "Solo una multa pagada puede reabrirse"
+            );
+        }
+
+        this.status = FineStatus.PENDING;
+        this.paidAt = null;
+        this.transactionId = null;
+    }
     }

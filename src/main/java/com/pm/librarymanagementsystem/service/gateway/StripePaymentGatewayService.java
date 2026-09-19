@@ -8,6 +8,7 @@ import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
@@ -106,13 +107,24 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
     @Override
     public GatewayRefundResponse refundPayment(Payment payment) {
         try {
-
             RefundCreateParams params =
                     RefundCreateParams.builder()
-                            .setPaymentIntent(payment.getPaymentIntentId())
+                            .setPaymentIntent(
+                                    payment.getPaymentIntentId()
+                            )
                             .build();
 
-            Refund refund = Refund.create(params);
+            RequestOptions requestOptions =
+                    RequestOptions.builder()
+                            .setIdempotencyKey(
+                                    "refund-payment-" + payment.getId()
+                            )
+                            .build();
+
+            Refund refund = Refund.create(
+                    params,
+                    requestOptions
+            );
 
             return new GatewayRefundResponse(
                     true,
@@ -120,12 +132,11 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                     refund.getStatus()
             );
 
-        } catch (StripeException e) {
-
+        } catch (StripeException exception) {
             return new GatewayRefundResponse(
                     false,
                     null,
-                    e.getMessage()
+                    exception.getMessage()
             );
         }
     }

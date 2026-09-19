@@ -17,6 +17,7 @@ import com.pm.librarymanagementsystem.service.PaymentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -112,31 +113,50 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse refundPayment(UUID paymentId) throws BadRequestException {
+    public PaymentResponse refundPayment(UUID paymentId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NotFoundException("Pago no encontrado"));
+        Payment payment = paymentRepository
+                .findByIdForUpdate(paymentId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Pago no encontrado"
+                        )
+                );
 
-        // Validaciones básicas reales
+        if (payment.getPaymentStatus() == PaymentStatus.REFUNDED) {
+            throw new BusinessRuleException(
+                    "El pago ya fue reembolsado"
+            );
+        }
+
         if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
-            throw new BadRequestException("Solo pagos exitosos pueden ser reembolsados");
+            throw new BusinessRuleException(
+                    "Solo los pagos exitosos pueden ser reembolsados"
+            );
+        }
+
+        if (payment.getPaymentIntentId() == null
+                || payment.getPaymentIntentId().isBlank()) {
+
+            throw new BusinessRuleException(
+                    "El pago no tiene una transacción válida para reembolso"
+            );
         }
 
         GatewayRefundResponse refundResponse =
                 paymentGatewayService.refundPayment(payment);
 
         if (!refundResponse.success()) {
-            throw new BadRequestException("Error procesando refund en gateway");
+            throw new BusinessRuleException(
+                    "No se pudo procesar el reembolso"
+            );
         }
 
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        payment.setRefundId(refundResponse.refundId());
+        payment.setRefundedAt(LocalDateTime.now());
 
-        if(payment.getPayable() instanceof Subscription s){
-            s.setActive(false);
-        }
-
-
-        paymentRepository.save(payment);
+        rollbackPayableAfterRefund(payment);
 
         return PaymentMapper.toResponse(payment);
     }
@@ -340,5 +360,30 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         return payment;
+    }
+
+    private void rollbackPayableAfterRefund(
+            Payment payment
+    ) {
+        Payable payable =
+                (Payable) Hibernate.unproxy(
+                        payment.getPayable()
+                );
+
+        if (payable instanceof Fine fine) {
+
+            fine.reopenAfterRefund();
+            fineRepository.save(fine);
+
+        } else if (payable instanceof Subscription subscription) {
+
+            subscription.cancel(
+                    "Suscripción cancelada por reembolso"
+            );
+
+            subscription.setAutoRenew(false);
+
+            subscriptionRepository.save(subscription);
+        }
     }
 }

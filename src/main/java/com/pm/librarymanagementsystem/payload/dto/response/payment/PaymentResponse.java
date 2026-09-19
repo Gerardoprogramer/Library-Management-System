@@ -23,12 +23,14 @@ public record PaymentResponse(
         String checkoutSessionId,
         String paymentIntentId,
         String chargeId,
+        String refundId,
 
         String description,
         String failureReason,
 
         LocalDateTime initiatedAt,
         LocalDateTime completedAt,
+        LocalDateTime refundedAt,
 
         LocalDateTime createdAt,
         LocalDateTime updatedAt

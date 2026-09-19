@@ -22,9 +22,9 @@ public class AdminPaymentController {
     @PostMapping("/{paymentId}/refund")
     public ResponseEntity<ApiResponse<PaymentResponse>> refundPayment(
             @PathVariable UUID paymentId
-    ) throws Exception {
-
-        return ResponseEntity.ok(ApiResponse.success(
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
                         "Reembolso procesado correctamente",
                         paymentService.refundPayment(paymentId)
                 )
