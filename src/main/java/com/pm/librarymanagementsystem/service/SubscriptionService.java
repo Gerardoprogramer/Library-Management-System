@@ -17,8 +17,6 @@ public interface SubscriptionService {
 
     SubscriptionResponse cancelSubscription(UUID id, CancelSubscriptionRequest request);
 
-    SubscriptionResponse activateSubscription(UUID subscriptionId, UUID paymentId);
-
     PageResponse<SubscriptionResponse> getAllSubscriptions(Pageable pageable);
 
     void deactivateExpiredSubscriptions();

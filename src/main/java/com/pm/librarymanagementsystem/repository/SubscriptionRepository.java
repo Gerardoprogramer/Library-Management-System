@@ -35,4 +35,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 """)
     List<Subscription> findSubscriptionsDueForRenewal(LocalDateTime now);
 
+    Optional<Subscription> findByIdAndUser_Id(
+            UUID id,
+            UUID userId
+    );
 }

@@ -50,15 +50,4 @@ public class SubscriptionController {
                         subscriptionService.cancelSubscription(id, request)
                 ));
     }
-
-    @PatchMapping("/activate")
-    public ResponseEntity<ApiResponse<SubscriptionResponse>> activateSubscription(
-            @RequestParam UUID subscriptionId,
-            @RequestParam UUID paymentId){
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Se activó correctamente",
-                        subscriptionService.activateSubscription(subscriptionId, paymentId)
-                ));
-    }
 }

@@ -83,24 +83,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse cancelSubscription(UUID id, CancelSubscriptionRequest request) {
+    @Transactional
+    public SubscriptionResponse cancelSubscription(
+            UUID id,
+            CancelSubscriptionRequest request
+    ) {
+        UUID userId = getCurrentUserId();
+
         Subscription subscription = subscriptionRepository
-                .findById(id)
-                .orElseThrow(()-> new NotFoundException("La suscripción no existe"));
+                .findByIdAndUser_Id(id, userId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Suscripción no encontrada"
+                        )
+                );
 
         subscription.cancel(request.reason());
 
-        return SubscriptionMapper.toResponse(subscriptionRepository.save(subscription));
-    }
-
-    @Override
-    public SubscriptionResponse activateSubscription(UUID subscriptionId, UUID paymentId) {
-        Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(()-> new NotFoundException("La suscripción no existe"));
-
-        subscription.setActive(true);
-
-        return SubscriptionMapper.toResponse(subscriptionRepository.save(subscription));
+        return SubscriptionMapper.toResponse(subscription);
     }
 
     @Override
