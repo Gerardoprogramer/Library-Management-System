@@ -69,14 +69,11 @@ public class FineServiceImpl implements FineService {
             throw new BusinessRuleException("Multa eximida");
         }
 
-        InitiatePaymentRequest request = InitiatePaymentRequest
-                .builder()
-                .payableId(fine.getId())
-                .paymentType(PaymentType.FINE)
-                .amount(fine.getAmount())
-                .currency(fine.getCurrency())
-                .description("pago de multas de la biblioteca")
-                .build();
+        InitiatePaymentRequest request =
+                InitiatePaymentRequest.builder()
+                        .payableId(fine.getId())
+                        .paymentType(PaymentType.FINE)
+                        .build();
 
         return paymentService.initiatePayment(getCurrentUserId(), request);
     }
