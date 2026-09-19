@@ -29,6 +29,8 @@ public interface PaymentService {
 
     Payment createSubscriptionRenewalPayment(Subscription subscription);
 
-    PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException;
+    PaymentResponseDTO getPaymentDetails(
+            String sessionId
+    );
 
 }

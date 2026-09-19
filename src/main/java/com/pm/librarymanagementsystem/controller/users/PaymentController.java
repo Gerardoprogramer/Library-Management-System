@@ -83,17 +83,15 @@ public class PaymentController {
         ));
     }
 
-    @CrossOrigin(origins = "https://obsidian-delta-kohl.vercel.app")
     @GetMapping("/success-details/{sessionId}")
-    public ResponseEntity<ApiResponse<PaymentResponseDTO>> getDetails(@PathVariable String sessionId) {
-        try {
-            PaymentResponseDTO details = paymentService.getPaymentDetails(sessionId);
-            return ResponseEntity.ok(ApiResponse.success(
-                    "Se completo correctamente",
-                    details
-            ));
-        } catch (StripeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<ApiResponse<PaymentResponseDTO>> getDetails(
+            @PathVariable String sessionId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Detalles del pago obtenidos correctamente",
+                        paymentService.getPaymentDetails(sessionId)
+                )
+        );
     }
 }

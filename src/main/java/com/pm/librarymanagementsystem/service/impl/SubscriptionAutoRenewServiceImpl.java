@@ -69,7 +69,7 @@ public class SubscriptionAutoRenewServiceImpl implements SubscriptionAutoRenewSe
         Payment payment = paymentService.createSubscriptionRenewalPayment(subscription);
 
         GatewayPaymentResponse gateway =
-                paymentGatewayService.createCheckoutSessionForRenewal(payment);
+                paymentGatewayService.createCheckoutSession(payment);
 
         payment.setCheckoutSessionId(gateway.checkoutSessionId());
         payment.setPaymentIntentId(gateway.paymentIntentId());

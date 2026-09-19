@@ -14,9 +14,6 @@ import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
-import com.stripe.exception.StripeException;
-import com.stripe.model.checkout.Session;
-import com.stripe.param.checkout.SessionListLineItemsParams;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -27,8 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 
@@ -164,18 +159,30 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Payment createSubscriptionRenewalPayment(Subscription subscription) {
+    public Payment createSubscriptionRenewalPayment(
+            Subscription subscription
+    ) {
         Payment payment = new Payment();
 
         payment.setUser(subscription.getUser());
-        payment.setAmount(BigDecimal.valueOf(subscription.getPrice()));
+
+        payment.setAmount(
+                BigDecimal.valueOf(
+                        subscription.getPrice(),
+                        2
+                )
+        );
+
         payment.setCurrency(Currency.USD);
         payment.setPaymentType(PaymentType.MEMBERSHIP);
         payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentGateway(PaymentGateway.STRIPE);
         payment.setRenewalPayment(true);
+        payment.setInitiatedAt(LocalDateTime.now());
 
         payment.setDescription(
-                "Auto renewal subscription - " + subscription.getPlanName()
+                "Renovación de suscripción: "
+                        + subscription.getPlanName()
         );
 
         payment.setPayable(subscription);
@@ -184,57 +191,43 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponseDTO getPaymentDetails(String sessionId) throws StripeException {
-        Session session = Session.retrieve(sessionId);
+    public PaymentResponseDTO getPaymentDetails(
+            String sessionId
+    ) {
+        Payment payment = paymentRepository
+                .findByCheckoutSessionIdAndUser_Id(
+                        sessionId,
+                        getCurrentUserId()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Pago no encontrado"
+                        )
+                );
 
-        Map<String, String> metadata = (session.getMetadata() != null) ? session.getMetadata() : new HashMap<>();
-        String typeFromMeta = metadata.getOrDefault("type", "MEMBERSHIP");
-        String plan = metadata.getOrDefault("plan", "Plan Estándar");
+        String plan = null;
 
-        PaymentType type;
-        try {
-            type = PaymentType.valueOf(typeFromMeta);
-        } catch (Exception e) {
-            type = PaymentType.MEMBERSHIP;
+        if (payment.getPayable() instanceof Subscription subscription) {
+            plan = subscription.getPlanName();
         }
 
-        double amount = 0.0;
-        if (session.getAmountTotal() != null) {
-            amount = session.getAmountTotal() / 100.0;
-        }
-
-        String currency = (session.getCurrency() != null) ? session.getCurrency().toUpperCase() : "USD";
-        String status = session.getPaymentStatus();
-
-        String description = "Suscripción a Librería";
-        try {
-            if (session.getAmountTotal() != null) {
-                SessionListLineItemsParams listParams = SessionListLineItemsParams.builder().setLimit(1L).build();
-                var lineItems = session.listLineItems(listParams).getData();
-                if (!lineItems.isEmpty()) {
-                    description = lineItems.get(0).getDescription();
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Waning: No se pudieron recuperar los line items, usando descripción por defecto");
-        }
-
-        String customerEmail = "N/A";
-        if (session.getCustomerDetails() != null && session.getCustomerDetails().getEmail() != null) {
-            customerEmail = session.getCustomerDetails().getEmail();
-        }
+        LocalDateTime date =
+                payment.getCompletedAt() != null
+                        ? payment.getCompletedAt()
+                        : payment.getCreatedAt();
 
         return new PaymentResponseDTO(
-                amount,
-                currency,
-                status,
-                description,
-                customerEmail,
-                LocalDateTime.now(),
-                type,
+                payment.getAmount().doubleValue(),
+                payment.getCurrency().name(),
+                payment.getPaymentStatus().name(),
+                payment.getDescription(),
+                payment.getUser().getEmail(),
+                date,
+                payment.getPaymentType(),
                 plan
         );
     }
+
     private UUID getCurrentUserId() {
         return (UUID) SecurityContextHolder
                 .getContext()

@@ -12,7 +12,4 @@ public interface PaymentGatewayService {
 
     GatewayRefundResponse refundPayment(Payment payment);
 
-    GatewayPaymentResponse createCheckoutSessionForRenewal(
-            Payment payment
-    );
 }

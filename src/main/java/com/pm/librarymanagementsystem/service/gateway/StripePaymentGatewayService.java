@@ -121,58 +121,5 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
             );
         }
     }
-
-    @Override
-    public GatewayPaymentResponse createCheckoutSessionForRenewal(Payment payment) {
-
-        try {
-
-            SessionCreateParams params =
-                    SessionCreateParams.builder()
-                            .setMode(SessionCreateParams.Mode.PAYMENT)
-
-                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}")
-                            .setCancelUrl("https://obsidian-delta-kohl.vercel.app/dashboard/subscription")
-
-                            .addPaymentMethodType(
-                                    SessionCreateParams.PaymentMethodType.CARD
-                            )
-
-                            .addLineItem(
-                                    SessionCreateParams.LineItem.builder()
-                                            .setQuantity(1L)
-                                            .setPriceData(
-                                                    SessionCreateParams.LineItem.PriceData.builder()
-                                                            .setCurrency("usd")
-                                                            .setUnitAmount(
-                                                                    payment.getAmount()
-                                                                            .multiply(BigDecimal.valueOf(100))
-                                                                            .longValue()
-                                                            )
-                                                            .setProductData(
-                                                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                            .setName(payment.getDescription())
-                                                                            .build()
-                                                            )
-                                                            .build()
-                                            )
-                                            .build()
-                            )
-
-                            .putMetadata("paymentId", payment.getId().toString())
-
-                            .build();
-            Session session = Session.create(params);
-
-            return new GatewayPaymentResponse(
-                    session.getUrl(),
-                    session.getId(),
-                    session.getPaymentIntent()
-            );
-
-        } catch (StripeException e) {
-            throw new RuntimeException("Stripe renewal error", e);
-        }
-    }
 }
 
