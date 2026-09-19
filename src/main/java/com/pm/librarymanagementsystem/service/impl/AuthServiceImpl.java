@@ -59,13 +59,13 @@ public class AuthServiceImpl implements AuthService {
 
         String accessToken = jwtProvider.generateAccessToken(user);
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
         user.setLastLogin(LocalDateTime.now());
 
         return new JwtResponse(
                 accessToken,
-                refreshToken.getToken(),
+                refreshToken,
                 UserMapper.toResponse(user)
         );
     }
@@ -93,11 +93,11 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = jwtProvider.generateAccessToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
         return new JwtResponse(
                 accessToken,
-                refreshToken.getToken(),
+                refreshToken,
                 UserMapper.toResponse(user)
         );
     }
@@ -172,20 +172,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public JwtResponse refresh(String refreshTokenRequest) {
+    public JwtResponse refresh(String refreshToken) {
 
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenRequest)
-                .orElseThrow(() -> new RuntimeException("Refresh token no encontrado"));
+        User user =
+                refreshTokenService.validateAndConsume(refreshToken);
 
-        refreshTokenService.verifyExpiration(refreshToken);
+        String newAccessToken =
+                jwtProvider.generateAccessToken(user);
 
-        User user = refreshToken.getUser();
-        String newAccessToken = jwtProvider.generateAccessToken(user);
+        String newRefreshToken =
+                refreshTokenService.createRefreshToken(user);
 
         return new JwtResponse(
                 newAccessToken,
-                refreshToken.getToken(),
-                UserMapper.toResponse(refreshToken.getUser())
+                newRefreshToken,
+                UserMapper.toResponse(user)
         );
     }
 }

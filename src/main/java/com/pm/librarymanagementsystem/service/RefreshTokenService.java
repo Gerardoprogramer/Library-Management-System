@@ -5,11 +5,9 @@ import com.pm.librarymanagementsystem.modal.User;
 
 public interface RefreshTokenService {
 
-    RefreshToken createRefreshToken(User user);
+    String createRefreshToken(User user);
 
-    RefreshToken verifyExpiration(RefreshToken token);
+    User validateAndConsume(String rawToken);
 
-    void delete(RefreshToken token);
-
-    void deleteByToken(String token);
+    void deleteByToken(String rawToken);
 }

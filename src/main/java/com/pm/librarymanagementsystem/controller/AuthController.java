@@ -10,6 +10,7 @@ import com.pm.librarymanagementsystem.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -17,129 +18,92 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
+    private static final String ACCESS_TOKEN_COOKIE = "access_token";
+    private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
+
+    private static final Duration ACCESS_TOKEN_DURATION = Duration.ofMinutes(15);
+    private static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(7);
+
     private final AuthService authService;
 
+    @Value("${app.cookie.secure}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site}")
+    private String cookieSameSite;
+
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<Object>> signupHandler(
+    public ResponseEntity<ApiResponse<Object>> signup(
             @RequestBody @Valid RegisterRequest request,
             HttpServletResponse response
     ) {
-
         JwtResponse authResponse = authService.signup(request);
 
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("lax")
-                .maxAge(Duration.ofMinutes(15))
-                .build();
-
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("lax")
-                .maxAge(Duration.ofDays(7))
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        setAuthCookies(response, authResponse);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Usuario registrado correctamente", authResponse.user()));
+                .body(
+                        ApiResponse.success(
+                                "Usuario registrado correctamente",
+                                authResponse.user()
+                        )
+                );
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Object>> loginHandler(
-            @RequestBody @Valid LoginRequest loginRequest,
+    public ResponseEntity<ApiResponse<Object>> login(
+            @RequestBody @Valid LoginRequest request,
             HttpServletResponse response
     ) {
+        JwtResponse authResponse = authService.login(request);
 
-        JwtResponse authResponse = authService.login(loginRequest);
-
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponse.accessToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("lax")
-                .maxAge(Duration.ofMinutes(15))
-                .build();
-
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponse.refreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("lax")
-                .maxAge(Duration.ofDays(7))
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        setAuthCookies(response, authResponse);
 
         return ResponseEntity.ok(
-                ApiResponse.success("Inicio de sesión exitoso", authResponse.user())
+                ApiResponse.success(
+                        "Inicio de sesión exitoso",
+                        authResponse.user()
+                )
         );
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            @CookieValue(name = REFRESH_TOKEN_COOKIE, required = false) String refreshToken,
             HttpServletResponse response
     ) {
-
         if (refreshToken != null) {
             authService.logout(refreshToken);
         }
 
-        ResponseCookie clearAccess = ResponseCookie.from("access_token", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .build();
+        clearAuthCookies(response);
 
-        ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
-
-        return ResponseEntity.ok(ApiResponse.success("Sesión cerrada correctamente"));
+        return ResponseEntity.ok(
+                ApiResponse.success("Sesión cerrada correctamente")
+        );
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<Object>> refresh(
-            @CookieValue(name = "refresh_token") String refreshToken,
+            @CookieValue(name = REFRESH_TOKEN_COOKIE) String refreshToken,
             HttpServletResponse response
     ) {
+        JwtResponse authResponse = authService.refresh(refreshToken);
 
-        JwtResponse jwtResponse = authService.refresh(refreshToken);
-
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtResponse.accessToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("lax")
-                .maxAge(Duration.ofMinutes(15))
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        setAuthCookies(response, authResponse);
 
         return ResponseEntity.ok(
-                ApiResponse.success("Access token renovado", jwtResponse.user())
+                ApiResponse.success(
+                        "Sesión renovada correctamente",
+                        authResponse.user()
+                )
         );
     }
 
@@ -160,10 +124,70 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @RequestBody @Valid ResetPasswordRequest request
     ) {
-        authService.resetPassword(request.token(), request.password());
+        authService.resetPassword(
+                request.token(),
+                request.password()
+        );
 
         return ResponseEntity.ok(
-                ApiResponse.success("Contraseña actualizada correctamente.")
+                ApiResponse.success(
+                        "Contraseña actualizada correctamente."
+                )
+        );
+    }
+
+    private void setAuthCookies(
+            HttpServletResponse response,
+            JwtResponse authResponse
+    ) {
+        addCookie(
+                response,
+                ACCESS_TOKEN_COOKIE,
+                authResponse.accessToken(),
+                ACCESS_TOKEN_DURATION
+        );
+
+        addCookie(
+                response,
+                REFRESH_TOKEN_COOKIE,
+                authResponse.refreshToken(),
+                REFRESH_TOKEN_DURATION
+        );
+    }
+
+    private void clearAuthCookies(HttpServletResponse response) {
+        addCookie(
+                response,
+                ACCESS_TOKEN_COOKIE,
+                "",
+                Duration.ZERO
+        );
+
+        addCookie(
+                response,
+                REFRESH_TOKEN_COOKIE,
+                "",
+                Duration.ZERO
+        );
+    }
+
+    private void addCookie(
+            HttpServletResponse response,
+            String name,
+            String value,
+            Duration maxAge
+    ) {
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .sameSite(cookieSameSite)
+                .maxAge(maxAge)
+                .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString()
         );
     }
 }
