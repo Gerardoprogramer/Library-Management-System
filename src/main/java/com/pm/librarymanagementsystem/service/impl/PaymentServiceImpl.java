@@ -1,15 +1,10 @@
 package com.pm.librarymanagementsystem.service.impl;
 
-import com.pm.librarymanagementsystem.domain.Currency;
-import com.pm.librarymanagementsystem.domain.PaymentGateway;
-import com.pm.librarymanagementsystem.domain.PaymentStatus;
-import com.pm.librarymanagementsystem.domain.PaymentType;
+import com.pm.librarymanagementsystem.domain.*;
+import com.pm.librarymanagementsystem.exception.BusinessRuleException;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.PaymentMapper;
-import com.pm.librarymanagementsystem.modal.Payable;
-import com.pm.librarymanagementsystem.modal.Payment;
-import com.pm.librarymanagementsystem.modal.Subscription;
-import com.pm.librarymanagementsystem.modal.User;
+import com.pm.librarymanagementsystem.modal.*;
 import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.PageResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.*;
@@ -19,9 +14,7 @@ import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
-import com.pm.librarymanagementsystem.service.UserService;
 import com.stripe.exception.StripeException;
-import com.stripe.model.AccountSession;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionListLineItemsParams;
 import jakarta.transaction.Transactional;
@@ -51,39 +44,38 @@ public class PaymentServiceImpl implements PaymentService {
     private final FineRepository fineRepository;
 
     @Override
-    public InitiatePaymentResponse initiatePayment(UUID userId, InitiatePaymentRequest request) {
-
+    public InitiatePaymentResponse initiatePayment(
+            UUID userId,
+            InitiatePaymentRequest request
+    ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        Payable payable = null;
-        if(request.paymentType() == PaymentType.MEMBERSHIP){
-            payable = subscriptionRepository.findById(request.payableId())
-                    .orElseThrow(() -> new RuntimeException("Subscripción no encontrada"));
-        }else if(request.paymentType() == PaymentType.FINE){
-            payable = fineRepository.findById(request.payableId())
-                    .orElseThrow(() -> new RuntimeException("No se encontro la Multa"));
-        }
+                .orElseThrow(() ->
+                        new NotFoundException("Usuario no encontrado")
+                );
 
-        // Mapper base
-        Payment payment = PaymentMapper.fromInitiateRequest(request);
+        Payable payable = resolvePayable(
+                userId,
+                request
+        );
 
-        payment.setUser(user);
-        payment.setPayable(payable);
-        payment.setPaymentType(request.paymentType());
-        payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setPaymentGateway(PaymentGateway.STRIPE);
-        payment.setInitiatedAt(LocalDateTime.now());
+        Payment payment = createPayment(
+                user,
+                payable,
+                request.paymentType()
+        );
 
         payment = paymentRepository.save(payment);
 
-        // Stripe Session
         GatewayPaymentResponse gatewayResponse =
-                paymentGatewayService.createCheckoutSession(payment, request);
+                paymentGatewayService.createCheckoutSession(payment);
 
-        payment.setCheckoutSessionId(gatewayResponse.checkoutSessionId());
-        payment.setPaymentIntentId(gatewayResponse.paymentIntentId());
+        payment.setCheckoutSessionId(
+                gatewayResponse.checkoutSessionId()
+        );
 
-        payment = paymentRepository.save(payment);
+        payment.setPaymentIntentId(
+                gatewayResponse.paymentIntentId()
+        );
 
         return new InitiatePaymentResponse(
                 payment.getId(),
@@ -96,17 +88,30 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentResponse getPaymentById(UUID paymentId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        Payment payment = paymentRepository
+                .findByIdAndUser_Id(
+                        paymentId,
+                        getCurrentUserId()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException("Pago no encontrado")
+                );
 
         return PaymentMapper.toResponse(payment);
     }
 
     @Override
-    public PaymentStatusResponse getPaymentStatus(UUID paymentId) {
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+    public PaymentStatusResponse getPaymentStatus(
+            UUID paymentId
+    ) {
+        Payment payment = paymentRepository
+                .findByIdAndUser_Id(
+                        paymentId,
+                        getCurrentUserId()
+                )
+                .orElseThrow(() ->
+                        new NotFoundException("Pago no encontrado")
+                );
 
         return PaymentMapper.toStatusResponse(payment);
     }
@@ -235,5 +240,112 @@ public class PaymentServiceImpl implements PaymentService {
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
+    }
+
+
+    private Payable resolvePayable(
+            UUID userId,
+            InitiatePaymentRequest request
+    ) {
+        return switch (request.paymentType()) {
+
+            case MEMBERSHIP -> {
+                Subscription subscription =
+                        subscriptionRepository
+                                .findById(request.payableId())
+                                .orElseThrow(() ->
+                                        new NotFoundException(
+                                                "Suscripción no encontrada"
+                                        )
+                                );
+
+                validateOwnership(subscription, userId);
+
+                if (subscription.isCurrentlyActive()) {
+                    throw new BusinessRuleException(
+                            "La suscripción ya se encuentra activa"
+                    );
+                }
+
+                yield subscription;
+            }
+
+            case FINE -> {
+                Fine fine = fineRepository
+                        .findById(request.payableId())
+                        .orElseThrow(() ->
+                                new NotFoundException(
+                                        "Multa no encontrada"
+                                )
+                        );
+
+                validateOwnership(fine, userId);
+
+                if (fine.getStatus() != FineStatus.PENDING) {
+                    throw new BusinessRuleException(
+                            "La multa no está disponible para pago"
+                    );
+                }
+
+                yield fine;
+            }
+
+            default -> throw new BusinessRuleException(
+                    "Tipo de pago no soportado"
+            );
+        };
+    }
+
+    private void validateOwnership(
+            Payable payable,
+            UUID userId
+    ) {
+        if (payable.getUser() == null ||
+                !payable.getUser().getId().equals(userId)) {
+
+            throw new NotFoundException(
+                    "Recurso de pago no encontrado"
+            );
+        }
+    }
+
+    private Payment createPayment(
+            User user,
+            Payable payable,
+            PaymentType paymentType
+    ) {
+        Payment payment = new Payment();
+
+        payment.setUser(user);
+        payment.setPayable(payable);
+        payment.setPaymentType(paymentType);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentGateway(PaymentGateway.STRIPE);
+        payment.setInitiatedAt(LocalDateTime.now());
+
+        if (payable instanceof Subscription subscription) {
+
+            payment.setAmount(
+                    BigDecimal.valueOf(
+                            subscription.getPrice(),
+                            2
+                    )
+            );
+
+            payment.setCurrency(Currency.USD);
+
+            payment.setDescription(
+                    "Suscripción al plan: "
+                            + subscription.getPlanName()
+            );
+
+        } else if (payable instanceof Fine fine) {
+
+            payment.setAmount(fine.getAmount());
+            payment.setCurrency(fine.getCurrency());
+            payment.setDescription("Pago de multa");
+        }
+
+        return payment;
     }
 }

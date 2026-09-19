@@ -1,30 +1,12 @@
 package com.pm.librarymanagementsystem.mapper;
 
 import com.pm.librarymanagementsystem.modal.Payment;
-import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.PaymentStatusResponse;
 
 public class PaymentMapper {
 
     private PaymentMapper() {}
-
-    /* =======================
-       DTO → ENTITY (CREATE)
-       ======================= */
-    public static Payment fromInitiateRequest(InitiatePaymentRequest request) {
-
-        if (request == null) return null;
-
-        Payment payment = new Payment();
-
-        payment.setPaymentType(request.paymentType());
-        payment.setAmount(request.amount());
-        payment.setCurrency(request.currency());
-        payment.setDescription(request.description());
-
-        return payment;
-    }
 
     /* =======================
        ENTITY → DTO

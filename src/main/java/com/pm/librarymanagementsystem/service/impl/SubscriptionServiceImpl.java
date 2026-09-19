@@ -1,6 +1,5 @@
 package com.pm.librarymanagementsystem.service.impl;
 
-import com.pm.librarymanagementsystem.domain.Currency;
 import com.pm.librarymanagementsystem.domain.PaymentType;
 import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.mapper.SubscriptionMapper;
@@ -27,8 +26,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -56,21 +53,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setActive(false);
         subscription = subscriptionRepository.save(subscription);
 
-        BigDecimal priceInDollars = BigDecimal.valueOf(plan.getPrice())
-                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        InitiatePaymentRequest paymentRequest =
+                InitiatePaymentRequest.builder()
+                        .payableId(subscription.getId())
+                        .paymentType(PaymentType.MEMBERSHIP)
+                        .build();
 
-        InitiatePaymentRequest paymentReq = InitiatePaymentRequest.builder()
-                .payableId(subscription.getId())
-                .paymentType(PaymentType.MEMBERSHIP)
-                .amount(priceInDollars)
-                .currency(Currency.USD)
-                .description("Suscripción al plan: " + plan.getName())
-                .paymentType(PaymentType.MEMBERSHIP)
-                .plan(subscription.getPlanName())
-                .build();
-
-        System.out.println("segundo sout");
-        InitiatePaymentResponse paymentResponse = paymentService.initiatePayment(user.getId(), paymentReq);
+        InitiatePaymentResponse paymentResponse =
+                paymentService.initiatePayment(
+                        user.getId(),
+                        paymentRequest
+                );
 
         SubscriptionResponse response = SubscriptionMapper.toResponse(subscription);
 

@@ -1,7 +1,7 @@
 package com.pm.librarymanagementsystem.service.gateway;
 
 import com.pm.librarymanagementsystem.modal.Payment;
-import com.pm.librarymanagementsystem.payload.dto.request.payment.InitiatePaymentRequest;
+import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.GatewayPaymentResponse;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.GatewayRefundResponse;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
@@ -21,50 +21,65 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
 
     @Override
     public GatewayPaymentResponse createCheckoutSession(
-            Payment payment,
-            InitiatePaymentRequest request
+            Payment payment
     ) {
-
         try {
 
-            SessionCreateParams params =
+            long amountInMinorUnits = payment.getAmount()
+                    .movePointRight(2)
+                    .longValueExact();
+
+            SessionCreateParams.Builder builder =
                     SessionCreateParams.builder()
                             .setMode(SessionCreateParams.Mode.PAYMENT)
-
-                            .setSuccessUrl("https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}")
-                            .setCancelUrl("https://obsidian-delta-kohl.vercel.app/dashboard/subscription")
-
+                            .setSuccessUrl(
+                                    "https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}"
+                            )
+                            .setCancelUrl(
+                                    "https://obsidian-delta-kohl.vercel.app/dashboard/subscription"
+                            )
                             .addPaymentMethodType(
                                     SessionCreateParams.PaymentMethodType.CARD
                             )
-
                             .addLineItem(
                                     SessionCreateParams.LineItem.builder()
                                             .setQuantity(1L)
                                             .setPriceData(
                                                     SessionCreateParams.LineItem.PriceData.builder()
-                                                            .setCurrency(request.currency().name().toLowerCase())
-                                                            .setUnitAmount(
-                                                                    request.amount()
-                                                                            .multiply(BigDecimal.valueOf(100))
-                                                                            .longValue()
+                                                            .setCurrency(
+                                                                    payment.getCurrency()
+                                                                            .name()
+                                                                            .toLowerCase()
                                                             )
+                                                            .setUnitAmount(amountInMinorUnits)
                                                             .setProductData(
                                                                     SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                            .setName(request.description())
+                                                                            .setName(payment.getDescription())
                                                                             .build()
                                                             )
                                                             .build()
                                             )
                                             .build()
                             )
+                            .putMetadata(
+                                    "paymentId",
+                                    payment.getId().toString()
+                            )
+                            .putMetadata(
+                                    "type",
+                                    payment.getPaymentType()
+                                            .name()
+                                            .toLowerCase()
+                            );
 
-                            .putMetadata("paymentId", payment.getId().toString())
-                            .putMetadata("type", request.paymentType().toString().toLowerCase())
-                            .putMetadata("plan", request.plan())
+            if (payment.getPayable() instanceof Subscription subscription) {
+                builder.putMetadata(
+                        "plan",
+                        subscription.getPlanName()
+                );
+            }
 
-                            .build();
-            Session session = Session.create(params);
+            Session session = Session.create(builder.build());
 
             return new GatewayPaymentResponse(
                     session.getUrl(),
@@ -73,7 +88,10 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
             );
 
         } catch (StripeException e) {
-            throw new RuntimeException("Stripe error", e);
+            throw new RuntimeException(
+                    "Error creando sesión de pago en Stripe",
+                    e
+            );
         }
     }
 

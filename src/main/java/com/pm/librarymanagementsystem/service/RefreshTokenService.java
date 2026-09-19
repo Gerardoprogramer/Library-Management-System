@@ -1,6 +1,5 @@
 package com.pm.librarymanagementsystem.service;
 
-import com.pm.librarymanagementsystem.modal.RefreshToken;
 import com.pm.librarymanagementsystem.modal.User;
 
 public interface RefreshTokenService {
