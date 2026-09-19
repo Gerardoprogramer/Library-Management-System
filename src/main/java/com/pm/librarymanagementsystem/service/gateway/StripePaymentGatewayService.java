@@ -13,7 +13,6 @@ import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -29,9 +28,18 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                     .movePointRight(2)
                     .longValueExact();
 
+            SessionCreateParams.PaymentIntentData paymentIntentData =
+                    SessionCreateParams.PaymentIntentData.builder()
+                            .putMetadata(
+                                    "paymentId",
+                                    payment.getId().toString()
+                            )
+                            .build();
+
             SessionCreateParams.Builder builder =
                     SessionCreateParams.builder()
                             .setMode(SessionCreateParams.Mode.PAYMENT)
+                            .setPaymentIntentData(paymentIntentData)
                             .setSuccessUrl(
                                     "https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}"
                             )
