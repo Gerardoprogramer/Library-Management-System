@@ -22,6 +22,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtValidator jwtValidator;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -49,6 +51,14 @@ public class SecurityConfig {
                 .cors(cors ->
                         cors.configurationSource(
                                 corsConfigurationSource()
+                        )
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(
+                                authenticationEntryPoint
+                        )
+                        .accessDeniedHandler(
+                                accessDeniedHandler
                         )
                 )
                 .authorizeHttpRequests(auth -> auth

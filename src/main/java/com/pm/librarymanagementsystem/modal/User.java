@@ -35,6 +35,7 @@ public class User {
 
     private String phone;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AuthProvider authProvider = AuthProvider.LOCAL;

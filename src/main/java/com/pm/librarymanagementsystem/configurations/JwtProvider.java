@@ -2,6 +2,7 @@ package com.pm.librarymanagementsystem.configurations;
 
 import com.pm.librarymanagementsystem.modal.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,7 +67,7 @@ public class JwtProvider {
         try {
             parseClaims(token);
             return true;
-        } catch (Exception exception) {
+        } catch (JwtException | IllegalArgumentException exception) {
             return false;
         }
     }

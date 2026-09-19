@@ -53,9 +53,11 @@ public class BookLoan {
 
     private LocalDateTime returnDate;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer renewalCount = 0;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer maxRenewals = 2;
 
@@ -65,6 +67,7 @@ public class BookLoan {
     @Column(nullable = false)
     private boolean overdue;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer overdueDays = 0;
 
