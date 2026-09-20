@@ -3,6 +3,7 @@ package com.pm.librarymanagementsystem.service.impl;
 import com.pm.librarymanagementsystem.domain.BookLoanStatus;
 import com.pm.librarymanagementsystem.domain.ReservationStatus;
 import com.pm.librarymanagementsystem.exception.BusinessRuleException;
+import com.pm.librarymanagementsystem.exception.NotFoundException;
 import com.pm.librarymanagementsystem.modal.Book;
 import com.pm.librarymanagementsystem.modal.BookLoan;
 import com.pm.librarymanagementsystem.modal.Reservation;
@@ -16,6 +17,7 @@ import com.pm.librarymanagementsystem.repository.ReservationRepository;
 import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.ReservationQueueService;
 import com.pm.librarymanagementsystem.service.SubscriptionService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,8 +25,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,6 +86,16 @@ class BookLoanServiceImplTest {
         book.setActive(true);
         book.setTotalCopies(5);
         book.setAvailableCopies(3);
+
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                userId,
+                                null,
+                                List.of()
+                        )
+                );
     }
 
     @Test
@@ -771,7 +789,11 @@ class BookLoanServiceImplTest {
 
         book.setAvailableCopies(2);
 
-        when(bookLoanRepository.findByIdForUpdate(loanId))
+        when(bookLoanRepository
+                .findByIdAndUserIdForUpdate(
+                        loanId,
+                        userId
+                ))
                 .thenReturn(Optional.of(loan));
 
         when(bookRepository.findByIdForUpdate(bookId))
@@ -844,7 +866,11 @@ class BookLoanServiceImplTest {
 
         book.setAvailableCopies(2);
 
-        when(bookLoanRepository.findByIdForUpdate(loanId))
+        when(bookLoanRepository
+                .findByIdAndUserIdForUpdate(
+                        loanId,
+                        userId
+                ))
                 .thenReturn(Optional.of(loan));
 
         when(bookRepository.findByIdForUpdate(bookId))
@@ -883,5 +909,182 @@ class BookLoanServiceImplTest {
                 .promoteNextReservations(any());
     }
 
+    @Test
+    void checkinBook_shouldRejectLoanOwnedByAnotherUser() {
 
+        UUID loanId = UUID.randomUUID();
+
+        when(bookLoanRepository
+                .findByIdAndUserIdForUpdate(
+                        loanId,
+                        userId
+                ))
+                .thenReturn(Optional.empty());
+
+        BookLoanCheckinRequest request =
+                new BookLoanCheckinRequest(
+                        loanId,
+                        BookLoanStatus.RETURNED,
+                        null
+                );
+
+        assertThrows(
+                NotFoundException.class,
+                () -> bookLoanService
+                        .checkinBook(request)
+        );
+
+        verify(bookRepository, never())
+                .findByIdForUpdate(any());
+    }
+
+    @Test
+    void checkinBook_shouldRejectNonTerminalStatus() {
+
+        UUID loanId = UUID.randomUUID();
+
+        BookLoan loan = BookLoan.builder()
+                .id(loanId)
+                .user(user)
+                .book(book)
+                .status(BookLoanStatus.CHECKED_OUT)
+                .checkoutDate(
+                        LocalDateTime.now()
+                                .minusDays(2)
+                )
+                .dueDate(
+                        LocalDateTime.now()
+                                .plusDays(5)
+                )
+                .build();
+
+        when(bookLoanRepository
+                .findByIdAndUserIdForUpdate(
+                        loanId,
+                        userId
+                ))
+                .thenReturn(Optional.of(loan));
+
+        BookLoanCheckinRequest request =
+                new BookLoanCheckinRequest(
+                        loanId,
+                        BookLoanStatus.OVERDUE,
+                        null
+                );
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> bookLoanService
+                        .checkinBook(request)
+        );
+
+        verify(bookRepository, never())
+                .findByIdForUpdate(any());
+    }
+
+    @Test
+    void updateOverdueBookLoan_shouldMarkLoansAndRefreshOverdueDays() {
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        BookLoan checkedOutLoan =
+                BookLoan.builder()
+                        .id(UUID.randomUUID())
+                        .user(user)
+                        .book(book)
+                        .status(
+                                BookLoanStatus.CHECKED_OUT
+                        )
+                        .checkoutDate(
+                                now.minusDays(10)
+                        )
+                        .dueDate(
+                                now.minusDays(3)
+                        )
+                        .overdue(false)
+                        .overdueDays(0)
+                        .build();
+
+        BookLoan alreadyOverdueLoan =
+                BookLoan.builder()
+                        .id(UUID.randomUUID())
+                        .user(user)
+                        .book(book)
+                        .status(
+                                BookLoanStatus.OVERDUE
+                        )
+                        .checkoutDate(
+                                now.minusDays(15)
+                        )
+                        .dueDate(
+                                now.minusDays(5)
+                        )
+                        .overdue(true)
+                        .overdueDays(1)
+                        .build();
+
+        var page =
+                new PageImpl<>(
+                        List.of(
+                                checkedOutLoan,
+                                alreadyOverdueLoan
+                        ),
+                        PageRequest.of(
+                                0,
+                                500
+                        ),
+                        2
+                );
+
+        when(bookLoanRepository
+                .findOverdueBookLoans(
+                        any(LocalDateTime.class),
+                        any(Pageable.class)
+                ))
+                .thenReturn(page);
+
+        int updated =
+                bookLoanService
+                        .updateOverdueBookLoan();
+
+        assertEquals(
+                BookLoanStatus.OVERDUE,
+                checkedOutLoan.getStatus()
+        );
+
+        assertTrue(
+                checkedOutLoan.isOverdue()
+        );
+
+        assertTrue(
+                checkedOutLoan.getOverdueDays()
+                        >= 2
+        );
+
+        assertEquals(
+                BookLoanStatus.OVERDUE,
+                alreadyOverdueLoan.getStatus()
+        );
+
+        assertTrue(
+                alreadyOverdueLoan.getOverdueDays()
+                        >= 4
+        );
+
+        assertEquals(
+                2,
+                updated
+        );
+
+        verify(bookLoanRepository)
+                .saveAll(
+                        page.getContent()
+                );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 }

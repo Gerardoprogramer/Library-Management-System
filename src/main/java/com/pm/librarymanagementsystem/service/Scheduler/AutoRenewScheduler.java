@@ -13,7 +13,9 @@ public class AutoRenewScheduler {
 
     private final SubscriptionAutoRenewService autoRenewService;
 
-    @Scheduled(cron = "0 */30 * * * *")
+    @Scheduled(
+            cron = "${app.scheduler.auto-renew-cron}"
+    )
     public void runAutoRenew() {
 
         log.info("Running AutoRenew Scheduler");

@@ -94,6 +94,7 @@ public class Subscription extends Payable{
 
     public void cancel(String reason) {
         this.active = false;
+        this.autoRenew = false;
         this.cancelledAt = LocalDateTime.now();
         this.cancellationReason = reason;
     }

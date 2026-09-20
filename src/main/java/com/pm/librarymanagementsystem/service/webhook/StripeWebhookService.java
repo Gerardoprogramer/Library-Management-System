@@ -89,6 +89,9 @@ public class StripeWebhookService {
             case "payment_intent.payment_failed" ->
                     handlePaymentFailed(event);
 
+            case "checkout.session.expired" ->
+                    handleCheckoutSessionExpired(event);
+
             default ->
                     log.debug(
                             "Stripe event ignored: {}",
@@ -349,5 +352,57 @@ public class StripeWebhookService {
         subscription.setActive(true);
 
         subscriptionRepository.save(subscription);
+    }
+
+    private void handleCheckoutSessionExpired(
+            Event event
+    ) {
+
+        StripeObject stripeObject =
+                getStripeObject(event);
+
+        if (!(stripeObject instanceof Session session)) {
+            throw new IllegalStateException(
+                    "El evento no contiene una Checkout Session"
+            );
+        }
+
+        UUID paymentId =
+                extractPaymentId(
+                        session
+                                .getMetadata()
+                                .get("paymentId"),
+                        event.getId()
+                );
+
+        if (paymentId == null) {
+            return;
+        }
+
+        Payment payment =
+                paymentRepository
+                        .findByIdForUpdate(
+                                paymentId
+                        )
+                        .orElse(null);
+
+        if (payment == null) {
+            return;
+        }
+
+        if (payment.getPaymentStatus()
+                != PaymentStatus.PENDING) {
+            return;
+        }
+
+        payment.setPaymentStatus(
+                PaymentStatus.CANCELLED
+        );
+
+        payment.setFailureReason(
+                "La sesión de pago expiró"
+        );
+
+        paymentRepository.save(payment);
     }
 }

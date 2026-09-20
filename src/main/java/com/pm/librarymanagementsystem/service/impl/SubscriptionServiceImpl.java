@@ -122,14 +122,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
+    @Transactional
     public void deactivateExpiredSubscriptions() {
-        List<Subscription> expiredSubscriptions = subscriptionRepository
-                .findExpiredActiveSubscriptions(LocalDateTime.now());
 
-        for(Subscription subscription: expiredSubscriptions){
-            subscription.setActive(false);
-            subscriptionRepository.save(subscription);
-        }
+        subscriptionRepository
+                .deactivateExpiredSubscriptions(
+                        LocalDateTime.now()
+                );
     }
 
     @Override

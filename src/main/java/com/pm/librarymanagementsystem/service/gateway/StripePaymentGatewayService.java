@@ -1,5 +1,6 @@
 package com.pm.librarymanagementsystem.service.gateway;
 
+import com.pm.librarymanagementsystem.configurations.StripeConfig;
 import com.pm.librarymanagementsystem.modal.Payment;
 import com.pm.librarymanagementsystem.modal.Subscription;
 import com.pm.librarymanagementsystem.payload.dto.response.payment.GatewayPaymentResponse;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class StripePaymentGatewayService implements PaymentGatewayService {
+
+    private final StripeConfig stripeConfig;
 
     @Override
     public GatewayPaymentResponse createCheckoutSession(
@@ -42,10 +45,10 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                             .setMode(SessionCreateParams.Mode.PAYMENT)
                             .setPaymentIntentData(paymentIntentData)
                             .setSuccessUrl(
-                                    "https://obsidian-delta-kohl.vercel.app/payment/success?session_id={CHECKOUT_SESSION_ID}"
+                                    stripeConfig.getSuccessUrl()
                             )
                             .setCancelUrl(
-                                    "https://obsidian-delta-kohl.vercel.app/dashboard/subscription"
+                                    stripeConfig.getCancelUrl()
                             )
                             .addPaymentMethodType(
                                     SessionCreateParams.PaymentMethodType.CARD
@@ -88,7 +91,19 @@ public class StripePaymentGatewayService implements PaymentGatewayService {
                 );
             }
 
-            Session session = Session.create(builder.build());
+            RequestOptions requestOptions =
+                    RequestOptions.builder()
+                            .setIdempotencyKey(
+                                    "checkout-payment-"
+                                            + payment.getId()
+                            )
+                            .build();
+
+            Session session =
+                    Session.create(
+                            builder.build(),
+                            requestOptions
+                    );
 
             return new GatewayPaymentResponse(
                     session.getUrl(),

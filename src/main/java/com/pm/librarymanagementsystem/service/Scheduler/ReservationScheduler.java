@@ -13,7 +13,9 @@ public class ReservationScheduler {
 
     private final ReservationQueueService reservationQueueService;
 
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(
+            cron = "${app.scheduler.reservation-expiration-cron}"
+    )
     public void expireReservations() {
 
         log.debug(

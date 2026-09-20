@@ -35,6 +35,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -140,8 +142,13 @@ public class BookLoanServiceImpl implements BookLoanService {
     public BookLoanResponse checkinBook(
             BookLoanCheckinRequest request
     ) {
+        UUID userId = getCurrentUserId();
+
         BookLoan bookLoan = bookLoanRepository
-                .findByIdForUpdate(request.loanId())
+                .findByIdAndUserIdForUpdate(
+                        request.loanId(),
+                        userId
+                )
                 .orElseThrow(() ->
                         new NotFoundException(
                                 "Préstamo de libro no encontrado"
@@ -151,6 +158,20 @@ public class BookLoanServiceImpl implements BookLoanService {
         if (!bookLoan.isActive()) {
             throw new BusinessRuleException(
                     "El préstamo del libro no está activo"
+            );
+        }
+
+        BookLoanStatus condition =
+                request.status() != null
+                        ? request.status()
+                        : BookLoanStatus.RETURNED;
+
+        if (condition != BookLoanStatus.RETURNED
+                && condition != BookLoanStatus.LOST
+                && condition != BookLoanStatus.DAMAGED) {
+
+            throw new BusinessRuleException(
+                    "Estado de devolución no válido"
             );
         }
 
@@ -164,18 +185,13 @@ public class BookLoanServiceImpl implements BookLoanService {
                         )
                 );
 
-        BookLoanStatus condition =
-                request.status() != null
-                        ? request.status()
-                        : BookLoanStatus.RETURNED;
-
         bookLoan.setReturnDate(LocalDateTime.now());
         bookLoan.setStatus(condition);
         bookLoan.setOverdueDays(0);
         bookLoan.setOverdue(false);
         bookLoan.setNotes(request.notes());
 
-        if (condition != BookLoanStatus.LOST) {
+        if (condition == BookLoanStatus.RETURNED) {
 
             book.setAvailableCopies(
                     book.getAvailableCopies() + 1
@@ -193,25 +209,66 @@ public class BookLoanServiceImpl implements BookLoanService {
 
     @Transactional
     @Override
-    public BookLoanResponse renewCheckout(BookLoanRenewalRequest request) {
+    public BookLoanResponse renewCheckout(
+            BookLoanRenewalRequest request
+    ) {
+
+        UUID userId = getCurrentUserId();
 
         BookLoan bookLoan = bookLoanRepository
-                .findByIdForUpdate(request.loanId())
+                .findByIdAndUserIdForUpdate(
+                        request.loanId(),
+                        userId
+                )
                 .orElseThrow(() ->
                         new NotFoundException(
                                 "Préstamo de libro no encontrado"
                         )
                 );
 
-        if(!bookLoan.canRenew()){
-            throw new BusinessRuleException("El libro no se puede renovar");
+        LocalDateTime now = LocalDateTime.now();
+
+        if (!bookLoan.canRenew()
+                || !bookLoan.getDueDate().isAfter(now)) {
+
+            throw new BusinessRuleException(
+                    "El libro no se puede renovar"
+            );
         }
 
-        bookLoan.setDueDate(bookLoan.getDueDate().plusDays(request.extensionDays()));
-        bookLoan.setRenewalCount(bookLoan.getRenewalCount() + 1);
-        bookLoan.setNotes(request.notes());
+        SubscriptionResponse subscription =
+                subscriptionService
+                        .getActiveSubscriptionForUser(
+                                userId
+                        );
 
-        return BookLoanMapper.toResponse(bookLoanRepository.save(bookLoan), BigDecimal.ZERO);
+        if (request.extensionDays()
+                > subscription.maxDaysPerBook()) {
+
+            throw new BusinessRuleException(
+                    "La extensión solicitada supera el máximo permitido por tu suscripción"
+            );
+        }
+
+        bookLoan.setDueDate(
+                bookLoan.getDueDate()
+                        .plusDays(
+                                request.extensionDays()
+                        )
+        );
+
+        bookLoan.setRenewalCount(
+                bookLoan.getRenewalCount() + 1
+        );
+
+        bookLoan.setNotes(
+                request.notes()
+        );
+
+        return BookLoanMapper.toResponse(
+                bookLoan,
+                BigDecimal.ZERO
+        );
     }
 
     @Override
@@ -265,22 +322,92 @@ public class BookLoanServiceImpl implements BookLoanService {
 
     @Override
     public int updateOverdueBookLoan() {
-        Pageable pageable = PageRequest.of(0, 1000);
-        Page<BookLoan> overduePage = bookLoanRepository
-                .findOverdueBookLoans(LocalDateTime.now(), pageable);
 
-        int updateCount = 0;
-        for(BookLoan bookLoan: overduePage.getContent()){
-            if(bookLoan.getStatus() == BookLoanStatus.CHECKED_OUT){
-                bookLoan.setStatus(BookLoanStatus.OVERDUE);
-                bookLoan.setOverdue(true);
+        final int batchSize = 500;
+        final LocalDateTime now = LocalDateTime.now();
 
-                bookLoanRepository.save(bookLoan);
-                updateCount++;
+        int pageNumber = 0;
+        int updatedCount = 0;
+
+        Page<BookLoan> overduePage;
+
+        do {
+            Pageable pageable =
+                    PageRequest.of(
+                            pageNumber,
+                            batchSize
+                    );
+
+            overduePage =
+                    bookLoanRepository
+                            .findOverdueBookLoans(
+                                    now,
+                                    pageable
+                            );
+
+            for (BookLoan bookLoan
+                    : overduePage.getContent()) {
+
+                boolean changed = false;
+
+                if (bookLoan.getStatus()
+                        == BookLoanStatus.CHECKED_OUT) {
+
+                    bookLoan.setStatus(
+                            BookLoanStatus.OVERDUE
+                    );
+
+                    changed = true;
+                }
+
+                if (!bookLoan.isOverdue()) {
+                    bookLoan.setOverdue(true);
+                    changed = true;
+                }
+
+                long calculatedDays =
+                        ChronoUnit.DAYS.between(
+                                bookLoan
+                                        .getDueDate()
+                                        .toLocalDate(),
+                                now.toLocalDate()
+                        );
+
+                int overdueDays =
+                        Math.toIntExact(
+                                Math.max(
+                                        calculatedDays,
+                                        0
+                                )
+                        );
+
+                if (!Objects.equals(
+                        bookLoan.getOverdueDays(),
+                        overdueDays
+                )) {
+                    bookLoan.setOverdueDays(
+                            overdueDays
+                    );
+
+                    changed = true;
+                }
+
+                if (changed) {
+                    updatedCount++;
+                }
             }
-        }
 
-        return updateCount;
+            if (!overduePage.isEmpty()) {
+                bookLoanRepository.saveAll(
+                        overduePage.getContent()
+                );
+            }
+
+            pageNumber++;
+
+        } while (!overduePage.isLast());
+
+        return updatedCount;
     }
 
     @Transactional

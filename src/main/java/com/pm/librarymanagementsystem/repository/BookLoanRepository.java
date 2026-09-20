@@ -45,13 +45,19 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
             @Param("userId") UUID userId);
 
     @Query("""
-    select bl from BookLoan bl where bl.dueDate < :currentDate
-    and (bl.status = 'CHECKED_OUT' OR bl.status = 'OVERDUE')
-""")
+        select bl
+        from BookLoan bl
+        where bl.dueDate < :currentDate
+        and (
+            bl.status = 'CHECKED_OUT'
+            or bl.status = 'OVERDUE'
+        )
+        order by bl.dueDate asc, bl.id asc
+        """)
     Page<BookLoan> findOverdueBookLoans(
-            @Param("currentDate")LocalDateTime currentDate,
+            @Param("currentDate") LocalDateTime currentDate,
             Pageable pageable
-            );
+    );
 
     boolean existsByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, BookLoanStatus status);
 
@@ -122,4 +128,18 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, UUID> {
             @Param("userId") UUID userId,
             @Param("now") LocalDateTime now
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select bl
+        from BookLoan bl
+        where bl.id = :loanId
+        and bl.user.id = :userId
+        """)
+    Optional<BookLoan> findByIdAndUserIdForUpdate(
+            @Param("loanId") UUID loanId,
+            @Param("userId") UUID userId
+    );
+
+
 }
