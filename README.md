@@ -1,149 +1,519 @@
-# Library Management System
+# Library Management System API
 
-Enterprise library management system built with **Spring Boot 3.3.7** and **Java 21**.
+![Backend CI](https://github.com/Gerardoprogramer/Library-Management-System/actions/workflows/backend-ci.yml/badge.svg)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.7-brightgreen)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-## 🚀 Tech Stack
+Backend REST API for a library management platform built with **Java 21**, **Spring Boot 3.3.7** and **PostgreSQL**.
 
-**Backend Core**
-- Java 21 + Spring Boot 3.3.7
-- Spring Data JPA + Hibernate 
-- H2 Database (development) / PostgreSQL-ready (production)
+The project covers the complete library workflow: catalog management, loans, reservations, reviews, wishlists, fines, subscriptions and payments through Stripe.
 
-**Security & Authentication**
-- Spring Security + JWT (JJWT 0.12.6)
-- Stateless token-based authentication
-- Role-based access control (USER/ADMIN)
+Beyond the business features, the backend focuses on security, database integrity, concurrency control, automated testing and deployability.
 
-**Payments & Billing**
-- **Stripe** payment gateway 
-- Secure checkout sessions
-- Asynchronous webhook confirmation
-- Support for subscriptions and fines
+---
 
-**Notifications**
-- Spring Mail + SMTP (Gmail) 
-- Thymeleaf email templates 
+## Main Features
 
-## 📦 Architecture
+### Library Management
 
+* Book and genre management
+* Book availability tracking
+* Loans, returns and renewals
+* Automatic overdue-loan processing
+* Reservation queue
+* Reservation expiration
+* Book reviews
+* Personal wishlists
+
+### Users and Administration
+
+* User registration and authentication
+* `USER` and `ADMIN` authorization
+* Administrative endpoints separated under `/api/v1/admin/**`
+* User management
+* Password reset by email
+* Initial administrator configuration through environment variables
+
+### Billing
+
+* Fines
+* Subscription plans
+* User subscriptions
+* Payment history
+* Stripe Checkout
+* Stripe webhooks
+* Payment refunds
+* Automatic subscription renewal
+
+---
+
+## Architecture
+
+The application follows a layered architecture with the business logic isolated from the HTTP and persistence layers.
+
+```mermaid
+flowchart TD
+    Client[Web / API Client]
+
+    Security[Spring Security<br/>JWT + CSRF]
+    Controllers[REST Controllers]
+    Services[Application / Business Services]
+    Repositories[Spring Data JPA]
+    Database[(PostgreSQL)]
+
+    Stripe[Stripe API]
+    Mail[SMTP / Email]
+    Schedulers[Scheduled Jobs]
+    Flyway[Flyway Migrations]
+
+    Client --> Security
+    Security --> Controllers
+    Controllers --> Services
+    Services --> Repositories
+    Repositories --> Database
+
+    Services --> Stripe
+    Services --> Mail
+
+    Schedulers --> Services
+    Flyway --> Database
 ```
-src/main/java/com/pm/librarymanagementsystem/
-├── configurations/    # Security, JWT, Stripe
-├── controller/        # REST endpoints (admin/, users/)
-├── domain/           # Enums (PaymentStatus, PaymentType, etc.)
-├── exception/        # Global error handling
-├── mapper/           # DTO ↔ Entity transformations
-├── modal/            # JPA entities
-├── payload/dto/      # Request/Response DTOs
-├── repository/       # Spring Data repositories
-├── scheduler/        # Scheduled tasks (@Scheduled)
-├── security/         # JWT provider & utilities
-├── service/          # Business interfaces
-│   ├── impl/        # Implementations
-│   ├── gateway/     # Stripe integration
-│   └── webhook/     # Webhook handlers
+
+Main application areas:
+
+```text
+configurations/   Security, OpenAPI, JWT and Stripe configuration
+controller/       REST API endpoints
+domain/           Domain enums and shared types
+exception/        Application exception handling
+mapper/           Entity / DTO mapping
+payload/dto/      Request and response contracts
+repository/       Spring Data JPA repositories
+security/         Authentication and JWT infrastructure
+service/          Business interfaces
+service/impl/     Application service implementations
+service/gateway/  External payment gateway integration
+service/scheduler Background processing
+service/webhook/  Webhook processing
 ```
 
+---
 
-**Pattern**: Layered architecture (Controller → Service → Repository → Entity)
+## Security
 
-## ⚙️ Configuration
+Authentication is based on **Spring Security + JWT** with a stateless Spring Security session policy.
 
-### Environment Variables
+The API supports two access-token mechanisms:
+
+* `Authorization: Bearer <token>`
+* JWT stored in the `access_token` HTTP-only cookie
+
+For browser-based clients, CSRF protection is enabled using Spring Security's cookie-based CSRF token repository.
+
+Protected state-changing requests use:
+
+```text
+X-XSRF-TOKEN
+```
+
+The CSRF token can be initialized through:
+
+```http
+GET /api/v1/auth/csrf
+```
+
+The Stripe webhook endpoint is excluded from CSRF because Stripe signs and sends those requests directly.
+
+### Refresh Tokens
+
+Refresh tokens are intentionally different from access JWTs.
+
+They are:
+
+* generated using `SecureRandom`
+* 256-bit opaque values
+* valid for 7 days
+* stored in the database only as a SHA-256 hash
+* consumed after use
+* protected with pessimistic database locking during consumption
+
+This provides refresh-token rotation and prevents the same stored token from being reused concurrently.
+
+### Additional Security Measures
+
+* BCrypt password hashing
+* Role-based access control
+* Configurable CORS origins
+* Secure / SameSite cookie configuration
+* API authentication errors handled by Spring Security
+* PostgreSQL integrity constraints as a second defensive layer
+
+---
+
+## Payments
+
+Payments are modeled independently from the Stripe integration.
+
+Supported payment types include:
+
+* library fines
+* subscriptions
+
+Typical checkout flow:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant DB as PostgreSQL
+    participant Stripe
+
+    Client->>API: Initiate payment
+    API->>DB: Validate payable resource
+    API->>DB: Reuse or create PENDING payment
+    DB-->>API: Payment ID
+    API->>Stripe: Create Checkout Session
+    Stripe-->>API: Checkout URL / Session
+    API->>DB: Store gateway references
+    API-->>Client: Checkout response
+```
+
+### Payment Reliability
+
+Critical payment paths include additional protections:
+
+* payable amounts are calculated from trusted database values
+* existing `PENDING` payments can be reused
+* pessimistic locking protects concurrent payment initiation
+* Stripe Checkout requests use an idempotency key based on the internal payment ID
+* refunds use their own Stripe idempotency key
+* payment gateway references are persisted separately from checkout preparation
+* refund processing validates the current payment state before applying local changes
+
+Example Stripe idempotency strategy:
+
+```text
+checkout-payment-{paymentId}
+refund-payment-{paymentId}
+```
+
+---
+
+## Database and Data Integrity
+
+The runtime database is **PostgreSQL**.
+
+Schema evolution is controlled with **Flyway**.
+
+Current migrations include:
+
+```text
+V1__baseline.sql
+V2__add_database_integrity_constraints.sql
+V3__normalize_user_emails.sql
+```
+
+Hibernate does not modify the production schema automatically:
+
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+This means:
+
+* Flyway owns schema changes
+* Hibernate validates entity/schema compatibility at startup
+* unexpected schema drift fails fast
+
+The database also contains integrity rules for important business invariants such as payment, loan, reservation, fine, subscription and user data.
+
+User emails are normalized at the database level to protect uniqueness consistently.
+
+`spring.jpa.open-in-view` is disabled so persistence access remains inside explicit application boundaries.
+
+---
+
+## Concurrency
+
+Some operations require more than application-level validation.
+
+The project uses `PESSIMISTIC_WRITE` locking in critical workflows where two simultaneous requests could otherwise operate on the same business resource.
+
+Examples include:
+
+* refresh-token consumption
+* payment preparation
+* payment updates
+* subscription renewal processing
+
+This helps prevent race conditions such as two concurrent requests creating duplicate pending payments for the same payable resource.
+
+---
+
+## Scheduled Processing
+
+Background jobs are handled with Spring `@Scheduled`.
+
+Current scheduled workflows include:
+
+* overdue-loan processing
+* reservation expiration
+* automatic subscription renewal
+* subscription expiration
+
+Cron expressions are externalized through environment variables so schedules can be changed without rebuilding the application.
+
+Individual renewal failures are isolated so one problematic subscription does not stop the complete batch.
+
+---
+
+## Technology Stack
+
+| Area                | Technology                  |
+| ------------------- | --------------------------- |
+| Language            | Java 21                     |
+| Framework           | Spring Boot 3.3.7           |
+| REST                | Spring Web                  |
+| Persistence         | Spring Data JPA / Hibernate |
+| Database            | PostgreSQL                  |
+| Migrations          | Flyway                      |
+| Security            | Spring Security             |
+| Authentication      | JWT / JJWT 0.12.6           |
+| Payments            | Stripe Java 31.3.0          |
+| Validation          | Jakarta Validation          |
+| Email               | Spring Mail + Thymeleaf     |
+| API Documentation   | Springdoc OpenAPI           |
+| Monitoring          | Spring Boot Actuator        |
+| Unit Testing        | JUnit 5 + Mockito           |
+| Integration Testing | Testcontainers              |
+| Build               | Maven                       |
+| Containerization    | Docker                      |
+| CI                  | GitHub Actions              |
+
+H2 is included only in the test environment; the application runtime uses PostgreSQL.
+
+---
+
+## Testing
+
+The backend includes unit and integration tests for critical workflows such as:
+
+* authentication and security
+* refresh tokens
+* payments
+* refunds
+* subscription renewal
+* reservation queues
+* database migrations and integrity constraints
+
+PostgreSQL integration tests use **Testcontainers**, allowing Flyway migrations and database behavior to be validated against a real PostgreSQL instance.
+
+Run the complete verification pipeline with:
+
 ```bash
-JWT_SECRET=your-256-bit-secret-key
-MAIL_PASSWORD=gmail-app-password
-ADMIN_EMAIL=admin@library.com
-ADMIN_PASSWORD=secure-admin-password
-``` 
+./mvnw clean verify
+```
 
-### Database
-- **Development**: H2 in-memory (`jdbc:h2:mem:librarydb`)  
-- **H2 Console**: `http://localhost:8080/h2-console`
-- **Production**: Migrate to PostgreSQL/MySQL (JPA-compatible)
+Windows:
 
-### Running the Application
+```powershell
+.\mvnw.cmd clean verify
+```
+
+`verify` executes both the unit and integration test suites.
+
+---
+
+## Continuous Integration
+
+GitHub Actions runs automatically on pushes and pull requests targeting `master`.
+
+The CI pipeline contains two dependent jobs:
+
+```text
+Build and test
+     │
+     └── clean verify
+            │
+            ▼
+      Docker build
+```
+
+The Docker image is only built after all Maven verification steps succeed.
+
+Test reports from Surefire and Failsafe are also preserved as workflow artifacts.
+
+Concurrent outdated runs on the same branch are automatically cancelled.
+
+---
+
+## Configuration
+
+The application is configured through environment variables.
+
+### Required variables
+
+| Variable                      | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `DB_URL`                      | PostgreSQL JDBC URL                  |
+| `DB_USER`                     | Database user                        |
+| `DB_PASSWORD`                 | Database password                    |
+| `JWT_SECRET`                  | Secret used to sign JWTs             |
+| `MAIL_USER`                   | SMTP account                         |
+| `MAIL_PASSWORD`               | SMTP password / application password |
+| `FRONTEND_RESET_PASSWORD_URL` | Frontend password-reset URL          |
+| `ADMIN_EMAIL`                 | Initial administrator email          |
+| `ADMIN_PASSWORD`              | Initial administrator password       |
+| `STRIPE_SECRET_KEY`           | Stripe secret API key                |
+| `STRIPE_WEBHOOK_SECRET`       | Stripe webhook signing secret        |
+| `STRIPE_SUCCESS_URL`          | Successful checkout redirect         |
+| `STRIPE_CANCEL_URL`           | Cancelled checkout redirect          |
+
+### Optional configuration
+
+| Variable                       | Default                                       |
+| ------------------------------ | --------------------------------------------- |
+| `PORT`                         | `8080`                                        |
+| `COOKIE_SECURE`                | `true`                                        |
+| `COOKIE_SAME_SITE`             | `None`                                        |
+| `CORS_ALLOWED_ORIGIN_PATTERNS` | `http://localhost:3000,http://localhost:5173` |
+| `FLYWAY_BASELINE_ON_MIGRATE`   | `false`                                       |
+| `OVERDUE_LOANS_CRON`           | every 10 minutes                              |
+| `AUTO_RENEW_CRON`              | every 30 minutes                              |
+| `RESERVATION_EXPIRATION_CRON`  | every 10 minutes                              |
+| `SUBSCRIPTION_EXPIRATION_CRON` | every 15 minutes                              |
+
+Secrets must not be committed to the repository.
+
+---
+
+## Running Locally
+
+### Requirements
+
+* Java 21
+* PostgreSQL
+* Git
+
+Clone the repository:
+
 ```bash
-# Clone
 git clone https://github.com/Gerardoprogramer/Library-Management-System.git
-
-# Set environment variables
-export JWT_SECRET="..." MAIL_PASSWORD="..." ADMIN_EMAIL="..." ADMIN_PASSWORD="..."
-
-# Run
-mvn spring-boot:run
+cd Library-Management-System
 ```
 
+Configure the required environment variables in your operating system, terminal or IDE.
 
-Application available at `http://localhost:8080`
+Then start the application.
 
-## 🔐 Security
+Linux / macOS:
 
-- **Stateless JWT**: No server-side sessions
-- **BCrypt**: Password hashing 
-- **CORS**: Configured for specific frontend 
-- **JWT Validation**: Custom pre-authentication filter
+```bash
+./mvnw spring-boot:run
+```
 
-## 💳 Payment System
+Windows:
 
-**Payment Flow**:
-1. Client initiates payment → `POST /api/v1/payments/initiate` 
-2. Backend creates Stripe Checkout Session 
-3. User completes payment on Stripe
-4. Webhook confirms payment → updates status
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-**Features**:
-- Webhook idempotency (prevents duplicates)  
-- Refund support 
-- Automatic subscription renewal 
+The API runs by default at:
 
-## 📊 Key Features
+```text
+http://localhost:8080
+```
 
-**Catalog Management**
-- Book CRUD with ISBN validation
-- Hierarchical genres (parent/child)
-- Soft delete 
+---
 
-**Circulation**
-- Loans with status tracking
-- Reservation queue system 
-- Reviews (only for returned books)
-- Personal wishlist
+## Docker
 
-**Billing**
-- Fines for late/damaged/lost items
-- Subscription plans
-- Payment history
+The repository includes a multi-stage Docker build using Java 21.
 
-## 🔄 Scheduled Tasks
+Build the image:
 
-- Automatic subscription renewal 
-- Email notifications
+```bash
+docker build -t library-management-system:local .
+```
 
-## 📝 API Endpoints
+The runtime container:
 
-**Public**
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/signup` - Registration
-- `POST /api/v1/payments/webhook` - Stripe webhook 
+* contains only the application runtime and packaged JAR
+* runs as a non-root user
+* exposes port `8080`
+* receives configuration through environment variables
 
-**Authenticated (USER)**
-- `GET /api/v1/books` - List books
-- `POST /api/v1/reservations` - Create reservation
-- `POST /api/v1/wishlist/{bookId}` - Add to wishlist 
-- `POST /api/v1/payments/initiate` - Initiate payment
+A PostgreSQL database accessible from the container is required at runtime.
 
-**Admin**
-- `POST /api/v1/admin/books` - Create book
-- `POST /api/v1/admin/reservations/user/{userId}` - Create reservation for user
+---
 
-## 🛡️ Validations
+## API Documentation
 
-- Unique ISBN per book
-- Maximum 5 active reservations per user 
-- Only review returned books
-- Non-duplicable fines
+OpenAPI documentation is generated with Springdoc.
 
-## Notes
+Local Swagger UI:
 
-This README is optimized for production, focusing on key technical aspects: architecture, security, Stripe payment integration, and deployment configuration. Internal implementation details were omitted, prioritizing information relevant for DevOps, architects, and developers who need to understand the system quickly.
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+OpenAPI document:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+Swagger documents both authentication alternatives:
+
+* Bearer JWT
+* `access_token` cookie
+
+For cookie-authenticated browser requests, CSRF-protected operations require the `X-XSRF-TOKEN` header.
+
+---
+
+## Health Check
+
+Spring Boot Actuator exposes the application health endpoint:
+
+```http
+GET /actuator/health
+```
+
+Only health information is publicly exposed and detailed internal health information is hidden.
+
+---
+
+## Graceful Shutdown
+
+The application enables Spring Boot graceful shutdown.
+
+```properties
+server.shutdown=graceful
+spring.lifecycle.timeout-per-shutdown-phase=20s
+```
+
+This gives active requests time to complete before the application terminates.
+
+---
+
+## Engineering Decisions
+
+Some of the main design decisions behind this project are:
+
+**Flyway owns the database schema**
+Hibernate validates the mapping instead of modifying the schema automatically.
+
+**Database constraints complement service validation**
+Important invariants are protected even if application validation is bypassed or concurrent requests occur.
+
+**External payment operations are separated from local state transitions where practical**
+Database state and Stripe operations are coordinated through explicit payment-processing steps.
+
+**Critical resources use pessimistic locking**
+Concurrency-sensitive operations are serialized instead of relying only on optimistic assumptions.
+
+**Refresh tokens are not stored in plaintext**
+Only their
