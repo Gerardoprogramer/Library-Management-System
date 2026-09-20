@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+.github
+
+# Build output
+target
+build
+dist
+
+# IDEs
+.idea
+.vscode
+.settings
+.project
+.classpath
+.factorypath
+*.iml
+*.iws
+*.ipr
+
+# Local environment / secrets
+.env
+.env.*
+*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Documentation not required in the image
+README.md
+HELP.md

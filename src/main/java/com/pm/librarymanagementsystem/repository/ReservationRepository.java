@@ -106,10 +106,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
             UUID userId
     );
 
-    List<Reservation> findByStatusAndAvailableUntilBefore(
-            ReservationStatus status,
-            LocalDateTime now
-    );
 
     @Query("""
         select r
@@ -121,5 +117,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
     List<Reservation> findActiveQueue(
             @Param("bookId") UUID bookId,
             @Param("statuses") List<ReservationStatus> statuses
+    );
+
+    @Query("""
+        select r
+        from Reservation r
+        where r.status = :status
+        and r.availableUntil < :now
+        order by r.availableUntil asc, r.id asc
+        """)
+    List<Reservation> findExpiredReservations(
+            @Param("status") ReservationStatus status,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
     );
 }

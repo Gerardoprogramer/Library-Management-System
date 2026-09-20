@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.pm.librarymanagementsystem.payload.apiResponse.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,16 +133,47 @@ public class GlobalExceptionHandler {
     }
 
     /* ===============================
+       CONFLICTO DE INTEGRIDAD DB
+       =============================== */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex
+    ) {
+
+        log.warn(
+                "Violación de integridad de datos: {}",
+                ex.getMostSpecificCause().getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        ApiResponse.error(
+                                "La operación entra en conflicto con el estado actual de los datos"
+                        )
+                );
+    }
+
+    /* ===============================
        FALLBACK (errores no controlados)
        =============================== */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(
+            Exception ex
+    ) {
 
-        log.error("Error interno no controlado", ex);
-
-        return ResponseEntity.status(500).body(
-                ApiResponse.error("Error interno del servidor")
+        log.error(
+                "Error interno no controlado",
+                ex
         );
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ApiResponse.error(
+                                "Error interno del servidor"
+                        )
+                );
     }
 }
 

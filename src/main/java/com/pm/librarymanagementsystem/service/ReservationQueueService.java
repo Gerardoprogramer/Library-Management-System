@@ -6,5 +6,5 @@ public interface ReservationQueueService {
 
     void promoteNextReservations(Book book);
 
-    void expireAvailableReservations();
+    int expireAvailableReservations();
 }

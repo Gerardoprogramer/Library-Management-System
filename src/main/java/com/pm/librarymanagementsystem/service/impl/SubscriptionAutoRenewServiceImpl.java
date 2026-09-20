@@ -59,7 +59,7 @@ public class SubscriptionAutoRenewServiceImpl
                                 notification.endDate()
                         );
 
-            } catch (Exception exception) {
+            }  catch (Exception exception) {
 
                 log.error(
                         "AutoRenew failed for subscription {}",
@@ -67,9 +67,18 @@ public class SubscriptionAutoRenewServiceImpl
                         exception
                 );
 
-                renewalProcessor.recordFailure(
-                        subscriptionId
-                );
+                try {
+                    renewalProcessor.recordFailure(
+                            subscriptionId
+                    );
+                } catch (Exception failureRecordingException) {
+
+                    log.error(
+                            "Could not record AutoRenew failure for subscription {}",
+                            subscriptionId,
+                            failureRecordingException
+                    );
+                }
             }
         }
     }

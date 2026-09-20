@@ -7,6 +7,7 @@ import com.pm.librarymanagementsystem.repository.BookRepository;
 import com.pm.librarymanagementsystem.repository.ReservationRepository;
 import com.pm.librarymanagementsystem.service.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class ReservationQueueServiceImpl
         implements ReservationQueueService {
 
     private static final int PICKUP_HOURS = 48;
+    private static final int EXPIRATION_BATCH_SIZE = 100;
 
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
@@ -79,17 +81,23 @@ public class ReservationQueueServiceImpl
 
     @Override
     @Transactional
-    public void expireAvailableReservations() {
+    public int expireAvailableReservations() {
 
         LocalDateTime now =
                 LocalDateTime.now();
 
         List<Reservation> expired =
                 reservationRepository
-                        .findByStatusAndAvailableUntilBefore(
+                        .findExpiredReservations(
                                 ReservationStatus.AVAILABLE,
-                                now
+                                now,
+                                PageRequest.of(
+                                        0,
+                                        EXPIRATION_BATCH_SIZE
+                                )
                         );
+
+        int expiredCount = 0;
 
         for (Reservation candidate : expired) {
 
@@ -127,13 +135,12 @@ public class ReservationQueueServiceImpl
                     ReservationStatus.EXPIRED
             );
 
-            /*
-             * Esa copia nunca se descontó de availableCopies;
-             * simplemente estaba apartada.
-             * Al expirar, podemos ofrecerla al siguiente.
-             */
+            expiredCount++;
+
             promoteNextReservations(book);
         }
+
+        return expiredCount;
     }
 
     private void recalculateQueuePositions(

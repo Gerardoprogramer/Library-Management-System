@@ -51,4 +51,12 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             @Param("paymentType") PaymentType paymentType,
             @Param("paymentStatus") PaymentStatus paymentStatus
     );
+
+    Optional<Payment>
+    findFirstByUser_IdAndPayable_IdAndPaymentTypeAndPaymentStatusAndRenewalPaymentFalseOrderByCreatedAtDesc(
+            UUID userId,
+            UUID payableId,
+            PaymentType paymentType,
+            PaymentStatus paymentStatus
+    );
 }

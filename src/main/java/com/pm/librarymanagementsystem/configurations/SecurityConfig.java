@@ -1,6 +1,7 @@
 package com.pm.librarymanagementsystem.configurations;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -24,6 +26,9 @@ public class SecurityConfig {
     private final JwtValidator jwtValidator;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
+
+    @Value("${app.cors.allowed-origin-patterns}")
+    private String allowedOriginPatterns;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -92,12 +97,14 @@ public class SecurityConfig {
 
         configuration.setAllowCredentials(true);
 
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://*.ngrok-free.dev",
-                "https://obsidianlibrary.netlify.app"
-        ));
+        configuration.setAllowedOriginPatterns(
+                Arrays.stream(
+                                allowedOriginPatterns.split(",")
+                        )
+                        .map(String::trim)
+                        .filter(origin -> !origin.isBlank())
+                        .toList()
+        );
 
         configuration.setAllowedMethods(List.of(
                 "GET",

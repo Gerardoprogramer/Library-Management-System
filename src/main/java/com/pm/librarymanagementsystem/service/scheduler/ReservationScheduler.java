@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.service.Scheduler;
+package com.pm.librarymanagementsystem.service.scheduler;
 
 import com.pm.librarymanagementsystem.service.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +18,15 @@ public class ReservationScheduler {
     )
     public void expireReservations() {
 
-        log.debug(
-                "Checking expired reservations"
-        );
+        int expired =
+                reservationQueueService
+                        .expireAvailableReservations();
 
-        reservationQueueService
-                .expireAvailableReservations();
+        if (expired > 0) {
+            log.info(
+                    "Expired reservations processed: {}",
+                    expired
+            );
+        }
     }
 }

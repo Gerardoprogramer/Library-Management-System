@@ -8,9 +8,11 @@ import com.pm.librarymanagementsystem.repository.ReservationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -286,9 +288,10 @@ class ReservationQueueServiceImplTest {
                 pendingReservation(1);
 
         when(reservationRepository
-                .findByStatusAndAvailableUntilBefore(
+                .findExpiredReservations(
                         eq(ReservationStatus.AVAILABLE),
-                        any(LocalDateTime.class)
+                        any(LocalDateTime.class),
+                        any(Pageable.class)
                 ))
                 .thenReturn(List.of(expired));
 
@@ -328,8 +331,14 @@ class ReservationQueueServiceImplTest {
                 ))
         )).thenReturn(List.of(next));
 
-        reservationQueueService
-                .expireAvailableReservations();
+        int result =
+                reservationQueueService
+                        .expireAvailableReservations();
+
+        assertEquals(
+                1,
+                result
+        );
 
         assertEquals(
                 ReservationStatus.EXPIRED,
@@ -384,5 +393,41 @@ class ReservationQueueServiceImplTest {
         reservation.setNotificationSent(false);
 
         return reservation;
+    }
+
+    @Test
+    void expireAvailableReservations_shouldUseBoundedBatch() {
+
+        when(reservationRepository
+                .findExpiredReservations(
+                        eq(ReservationStatus.AVAILABLE),
+                        any(LocalDateTime.class),
+                        any(Pageable.class)
+                ))
+                .thenReturn(List.of());
+
+        int result =
+                reservationQueueService
+                        .expireAvailableReservations();
+
+        assertEquals(0, result);
+
+        ArgumentCaptor<Pageable> pageableCaptor =
+                ArgumentCaptor.forClass(
+                        Pageable.class
+                );
+
+        verify(reservationRepository)
+                .findExpiredReservations(
+                        eq(ReservationStatus.AVAILABLE),
+                        any(LocalDateTime.class),
+                        pageableCaptor.capture()
+                );
+
+        Pageable pageable =
+                pageableCaptor.getValue();
+
+        assertEquals(0, pageable.getPageNumber());
+        assertEquals(100, pageable.getPageSize());
     }
 }

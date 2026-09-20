@@ -7,6 +7,7 @@ import com.pm.librarymanagementsystem.payload.dto.request.auth.RegisterRequest;
 import com.pm.librarymanagementsystem.payload.dto.request.auth.ResetPasswordRequest;
 import com.pm.librarymanagementsystem.payload.dto.response.jwt.JwtResponse;
 import com.pm.librarymanagementsystem.service.AuthService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.time.Duration;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@SecurityRequirements
 public class AuthController {
 
     private static final String ACCESS_TOKEN_COOKIE = "access_token";

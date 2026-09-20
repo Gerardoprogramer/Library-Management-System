@@ -3,12 +3,15 @@ package com.pm.librarymanagementsystem.repository;
 import com.pm.librarymanagementsystem.domain.FineStatus;
 import com.pm.librarymanagementsystem.domain.FineType;
 import com.pm.librarymanagementsystem.modal.Fine;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FineRepository extends JpaRepository<Fine, UUID> {
@@ -26,4 +29,15 @@ public interface FineRepository extends JpaRepository<Fine, UUID> {
             @Param("type")FineType type,
             Pageable pageable
             );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select f
+        from Fine f
+        join fetch f.user
+        where f.id = :fineId
+        """)
+    Optional<Fine> findByIdForPayment(
+            @Param("fineId") UUID fineId
+    );
 }

@@ -11,10 +11,9 @@ import com.pm.librarymanagementsystem.payload.dto.response.payment.*;
 import com.pm.librarymanagementsystem.repository.FineRepository;
 import com.pm.librarymanagementsystem.repository.PaymentRepository;
 import com.pm.librarymanagementsystem.repository.SubscriptionRepository;
-import com.pm.librarymanagementsystem.repository.UserRepository;
 import com.pm.librarymanagementsystem.service.PaymentGatewayService;
 import com.pm.librarymanagementsystem.service.PaymentService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
@@ -29,48 +28,39 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentGatewayService paymentGatewayService;
-    private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final FineRepository fineRepository;
+    private final PaymentInitiationProcessor paymentInitiationProcessor;
+    private final PaymentRefundProcessor paymentRefundProcessor;
 
     @Override
     public InitiatePaymentResponse initiatePayment(
             UUID userId,
             InitiatePaymentRequest request
     ) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new NotFoundException("Usuario no encontrado")
-                );
 
-        Payable payable = resolvePayable(
-                userId,
-                request
-        );
-
-        Payment payment = createPayment(
-                user,
-                payable,
-                request.paymentType()
-        );
-
-        payment = paymentRepository.save(payment);
+        Payment payment =
+                paymentInitiationProcessor
+                        .preparePayment(
+                                userId,
+                                request
+                        );
 
         GatewayPaymentResponse gatewayResponse =
-                paymentGatewayService.createCheckoutSession(payment);
+                paymentGatewayService
+                        .createCheckoutSession(
+                                payment
+                        );
 
-        payment.setCheckoutSessionId(
-                gatewayResponse.checkoutSessionId()
-        );
-
-        payment.setPaymentIntentId(
-                gatewayResponse.paymentIntentId()
-        );
+        paymentInitiationProcessor
+                .storeGatewayReferences(
+                        payment.getId(),
+                        gatewayResponse
+                );
 
         return new InitiatePaymentResponse(
                 payment.getId(),
@@ -81,6 +71,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaymentResponse getPaymentById(UUID paymentId) {
 
         Payment payment = paymentRepository
@@ -96,6 +87,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaymentStatusResponse getPaymentStatus(
             UUID paymentId
     ) {
@@ -112,38 +104,21 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse refundPayment(UUID paymentId) {
+    public PaymentResponse refundPayment(
+            UUID paymentId
+    ) {
 
-        Payment payment = paymentRepository
-                .findByIdForUpdate(paymentId)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Pago no encontrado"
-                        )
-                );
-
-        if (payment.getPaymentStatus() == PaymentStatus.REFUNDED) {
-            throw new BusinessRuleException(
-                    "El pago ya fue reembolsado"
-            );
-        }
-
-        if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
-            throw new BusinessRuleException(
-                    "Solo los pagos exitosos pueden ser reembolsados"
-            );
-        }
-
-        if (payment.getPaymentIntentId() == null
-                || payment.getPaymentIntentId().isBlank()) {
-
-            throw new BusinessRuleException(
-                    "El pago no tiene una transacción válida para reembolso"
-            );
-        }
+        Payment payment =
+                paymentRefundProcessor
+                        .prepareRefund(
+                                paymentId
+                        );
 
         GatewayRefundResponse refundResponse =
-                paymentGatewayService.refundPayment(payment);
+                paymentGatewayService
+                        .refundPayment(
+                                payment
+                        );
 
         if (!refundResponse.success()) {
             throw new BusinessRuleException(
@@ -151,16 +126,20 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
-        payment.setPaymentStatus(PaymentStatus.REFUNDED);
-        payment.setRefundId(refundResponse.refundId());
-        payment.setRefundedAt(LocalDateTime.now());
+        Payment refundedPayment =
+                paymentRefundProcessor
+                        .applyRefund(
+                                paymentId,
+                                refundResponse
+                        );
 
-        rollbackPayableAfterRefund(payment);
-
-        return PaymentMapper.toResponse(payment);
+        return PaymentMapper.toResponse(
+                refundedPayment
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<PaymentResponse> getPaymentHistory(Pageable pageable) {
 
         Page<Payment> payment = paymentRepository.findByUserId(getCurrentUserId(), pageable);
@@ -178,6 +157,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional
     public Payment createSubscriptionRenewalPayment(
             Subscription subscription
     ) {
@@ -210,6 +190,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaymentResponseDTO getPaymentDetails(
             String sessionId
     ) {
@@ -252,137 +233,5 @@ public class PaymentServiceImpl implements PaymentService {
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
-    }
-
-
-    private Payable resolvePayable(
-            UUID userId,
-            InitiatePaymentRequest request
-    ) {
-        return switch (request.paymentType()) {
-
-            case MEMBERSHIP -> {
-                Subscription subscription =
-                        subscriptionRepository
-                                .findById(request.payableId())
-                                .orElseThrow(() ->
-                                        new NotFoundException(
-                                                "Suscripción no encontrada"
-                                        )
-                                );
-
-                validateOwnership(subscription, userId);
-
-                if (subscription.isCurrentlyActive()) {
-                    throw new BusinessRuleException(
-                            "La suscripción ya se encuentra activa"
-                    );
-                }
-
-                yield subscription;
-            }
-
-            case FINE -> {
-                Fine fine = fineRepository
-                        .findById(request.payableId())
-                        .orElseThrow(() ->
-                                new NotFoundException(
-                                        "Multa no encontrada"
-                                )
-                        );
-
-                validateOwnership(fine, userId);
-
-                if (fine.getStatus() != FineStatus.PENDING) {
-                    throw new BusinessRuleException(
-                            "La multa no está disponible para pago"
-                    );
-                }
-
-                yield fine;
-            }
-
-            default -> throw new BusinessRuleException(
-                    "Tipo de pago no soportado"
-            );
-        };
-    }
-
-    private void validateOwnership(
-            Payable payable,
-            UUID userId
-    ) {
-        if (payable.getUser() == null ||
-                !payable.getUser().getId().equals(userId)) {
-
-            throw new NotFoundException(
-                    "Recurso de pago no encontrado"
-            );
-        }
-    }
-
-    private Payment createPayment(
-            User user,
-            Payable payable,
-            PaymentType paymentType
-    ) {
-        Payment payment = new Payment();
-
-        payment.setUser(user);
-        payment.setPayable(payable);
-        payment.setPaymentType(paymentType);
-        payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setPaymentGateway(PaymentGateway.STRIPE);
-        payment.setInitiatedAt(LocalDateTime.now());
-
-        if (payable instanceof Subscription subscription) {
-
-            payment.setAmount(
-                    BigDecimal.valueOf(
-                            subscription.getPrice(),
-                            2
-                    )
-            );
-
-            payment.setCurrency(Currency.USD);
-
-            payment.setDescription(
-                    "Suscripción al plan: "
-                            + subscription.getPlanName()
-            );
-
-        } else if (payable instanceof Fine fine) {
-
-            payment.setAmount(fine.getAmount());
-            payment.setCurrency(fine.getCurrency());
-            payment.setDescription("Pago de multa");
-        }
-
-        return payment;
-    }
-
-    private void rollbackPayableAfterRefund(
-            Payment payment
-    ) {
-        Payable payable =
-                (Payable) Hibernate.unproxy(
-                        payment.getPayable()
-                );
-
-        if (payable instanceof Fine fine) {
-
-            fine.reopenAfterRefund();
-            fineRepository.save(fine);
-
-        } else if (payable instanceof Subscription subscription) {
-
-            subscription.cancel(
-                    "Suscripción cancelada por reembolso"
-            );
-
-            subscription.setAutoRenew(false);
-
-            subscriptionRepository.save(subscription);
-        }
     }
 }

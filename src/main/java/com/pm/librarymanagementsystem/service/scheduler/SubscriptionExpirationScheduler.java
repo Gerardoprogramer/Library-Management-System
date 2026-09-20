@@ -1,4 +1,4 @@
-package com.pm.librarymanagementsystem.service.Scheduler;
+package com.pm.librarymanagementsystem.service.scheduler;
 
 import com.pm.librarymanagementsystem.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;

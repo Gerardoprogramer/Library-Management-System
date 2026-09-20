@@ -67,4 +67,16 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     int deactivateExpiredSubscriptions(
             @Param("now") LocalDateTime now
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select s
+        from Subscription s
+        join fetch s.user
+        join fetch s.subscriptionPlan
+        where s.id = :subscriptionId
+        """)
+    Optional<Subscription> findByIdForPayment(
+            @Param("subscriptionId") UUID subscriptionId
+    );
 }
